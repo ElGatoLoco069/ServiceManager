@@ -6,9 +6,204 @@
 {% endblock %}
 
 {% block extra_head %}
-<title>Visão geral | Service Manager</title>
+<title>Dashboard | Service Manager</title>
 {% endblock %}
 
 {% block content %}
+{% now "Y-m-d" as dashboard_today_iso %}
+{% now "d/m/Y" as dashboard_today %}
+{% comment %}
+    Dashboard visual: indicadores e registros fictícios, exclusivos deste template.
+    A data atual contextualiza a demonstração. Nenhum dado é consultado ou persistido.
+    TODO: substituir os exemplos pelo contexto real quando o backend estiver pronto.
+{% endcomment %}
+<div class="dashboard">
+    <header class="dashboard__header">
+        <div class="dashboard__intro">
+            <h1>Dashboard</h1>
+            <p>Visão geral das solicitações e serviços.</p>
+        </div>
+        <div class="dashboard__meta">
+            <time class="dashboard__date" datetime="{{ dashboard_today_iso }}"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ dashboard_today }}</time>
+            <span class="dashboard__demo">Dados de demonstração</span>
+        </div>
+    </header>
+
+    <section aria-label="Indicadores de solicitações e serviços">
+        <dl class="summary-grid">
+            <div class="summary-card summary-card--info">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-file-circle-plus"></i></span><span class="summary-card__label">Novas solicitações</span></dt>
+                <dd class="summary-card__result"><strong>3</strong><span>recém-recebidas</span></dd>
+            </div>
+            <div class="summary-card summary-card--warning">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span><span class="summary-card__label">Aguardando agendamento</span></dt>
+                <dd class="summary-card__result"><strong>3</strong><span>serviços pendentes</span></dd>
+            </div>
+            <div class="summary-card summary-card--info">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></span><span class="summary-card__label">Agendados para hoje</span></dt>
+                <dd class="summary-card__result"><strong>3</strong><span>na agenda do dia</span></dd>
+            </div>
+            <div class="summary-card summary-card--orange">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-gears"></i></span><span class="summary-card__label">Em execução</span></dt>
+                <dd class="summary-card__result"><strong>1</strong><span>serviço em andamento</span></dd>
+            </div>
+            <div class="summary-card summary-card--success">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span><span class="summary-card__label">Concluídos hoje</span></dt>
+                <dd class="summary-card__result"><strong>1</strong><span>serviço finalizado</span></dd>
+            </div>
+        </dl>
+    </section>
+
+    <div class="dashboard-grid">
+        <section class="dashboard-card schedule-card" aria-labelledby="schedule-title">
+            <header class="card-heading">
+                <div><h2 id="schedule-title">Agenda de hoje</h2><p>Acompanhe os serviços programados para o dia.</p></div>
+                <span class="dashboard-count">3 serviços</span>
+            </header>
+            <ol class="schedule-list">
+                <li class="schedule-item">
+                    <time datetime="{{ dashboard_today_iso }}T07:30">07:30</time>
+                    <span class="status-dot status-dot--success" aria-hidden="true"></span>
+                    <div class="schedule-item__details">
+                        <span class="schedule-item__protocol">SRV-2026-000189</span>
+                        <strong>Limpeza de terreno — 1 serviço</strong>
+                        <span class="schedule-item__requester">Ana Costa</span>
+                        <div class="schedule-item__meta">
+                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Vila Esperança</span>
+                            <span><i class="fa-solid fa-user" aria-hidden="true"></i> Operador: Paulo</span>
+                        </div>
+                    </div>
+                    <span class="badge badge--success">Concluído</span>
+                </li>
+                <li class="schedule-item">
+                    <time datetime="{{ dashboard_today_iso }}T08:00">08:00</time>
+                    <span class="status-dot status-dot--info" aria-hidden="true"></span>
+                    <div class="schedule-item__details">
+                        <span class="schedule-item__protocol">SRV-2026-000184</span>
+                        <strong>Transporte de terra — 5 cargas</strong>
+                        <span class="schedule-item__requester">João da Silva</span>
+                        <div class="schedule-item__meta">
+                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Linha São José</span>
+                            <span><i class="fa-solid fa-user" aria-hidden="true"></i> Operador: João Emerson</span>
+                        </div>
+                    </div>
+                    <span class="badge badge--info">Agendado</span>
+                </li>
+                <li class="schedule-item">
+                    <time datetime="{{ dashboard_today_iso }}T13:30">13:30</time>
+                    <span class="status-dot status-dot--orange" aria-hidden="true"></span>
+                    <div class="schedule-item__details">
+                        <span class="schedule-item__protocol">SRV-2026-000191</span>
+                        <strong>Nivelamento de terreno — 1 serviço</strong>
+                        <span class="schedule-item__requester">Maria Oliveira</span>
+                        <div class="schedule-item__meta">
+                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Comunidade Central</span>
+                            <span><i class="fa-solid fa-user" aria-hidden="true"></i> Operador: Carlos</span>
+                        </div>
+                    </div>
+                    <span class="badge badge--orange">Em execução</span>
+                </li>
+            </ol>
+        </section>
+
+        <section class="dashboard-card pending-card" aria-labelledby="pending-title">
+            <header class="card-heading">
+                <div><h2 id="pending-title">Aguardando agendamento</h2><p>Serviços que precisam de uma data.</p></div>
+                <span class="pending-card__icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+            </header>
+            <ul class="pending-list">
+                <li class="pending-item">
+                    <span class="pending-item__protocol">SRV-2026-000190</span>
+                    <strong>Carlos Pereira</strong>
+                    <p>Transporte de cascalho <span class="pending-item__quantity">— 4 cargas</span></p>
+                    <span class="pending-item__date">Solicitado em <time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></span>
+                </li>
+                <li class="pending-item">
+                    <span class="pending-item__protocol">SRV-2026-000187</span>
+                    <strong>Marcos Souza</strong>
+                    <p>Cascalhamento <span class="pending-item__quantity">— 1 serviço</span></p>
+                    <span class="pending-item__date">Solicitado em <time datetime="2026-09-07">07/09/2026</time></span>
+                </li>
+                <li class="pending-item">
+                    <span class="pending-item__protocol">SRV-2026-000186</span>
+                    <strong>Luciana Alves</strong>
+                    <p>Transporte de terra <span class="pending-item__quantity">— 3 cargas</span></p>
+                    <span class="pending-item__date">Solicitado em <time datetime="2026-09-07">07/09/2026</time></span>
+                </li>
+            </ul>
+        </section>
+    </div>
+
+    <section class="dashboard-card requests-card" aria-labelledby="requests-title">
+        <header class="card-heading">
+            <div><h2 id="requests-title">Solicitações recentes</h2><p>Últimas solicitações recebidas e suas situações.</p></div>
+            <span class="dashboard-count">5 registros</span>
+        </header>
+        <div class="requests-table-wrapper" role="region" aria-labelledby="requests-title" tabindex="0">
+            <table class="requests-table">
+                <caption class="sr-only">Cinco solicitações recentes. Dados fictícios para demonstração.</caption>
+                <thead class="requests-table__header">
+                    <tr><th scope="col">Protocolo</th><th scope="col">Solicitante</th><th scope="col">Serviços</th><th scope="col">Data</th><th scope="col">Situação</th><th scope="col">Ação</th></tr>
+                </thead>
+                <tbody>
+                    {% comment %}TODO: conectar os botões Ver à rota real de detalhe quando ela existir. Temporariamente desabilitados.{% endcomment %}
+                    <tr class="request-row">
+                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000191</strong></td>
+                        <td class="request-cell" data-label="Solicitante">Maria Oliveira</td>
+                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Nivelamento de terreno — 1 serviço</li></ul></td>
+                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
+                        <td class="request-cell" data-label="Situação"><span class="badge badge--orange">Em execução</span></td>
+                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000191 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
+                    </tr>
+                    <tr class="request-row">
+                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000190</strong></td>
+                        <td class="request-cell" data-label="Solicitante">Carlos Pereira</td>
+                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Transporte de cascalho — 4 cargas</li></ul></td>
+                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
+                        <td class="request-cell" data-label="Situação"><span class="badge badge--warning">Aguardando agendamento</span></td>
+                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000190 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
+                    </tr>
+                    <tr class="request-row">
+                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000189</strong></td>
+                        <td class="request-cell" data-label="Solicitante">Ana Costa</td>
+                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Limpeza de terreno — 1 serviço</li></ul></td>
+                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
+                        <td class="request-cell" data-label="Situação"><span class="badge badge--success">Concluído</span></td>
+                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000189 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
+                    </tr>
+                    <tr class="request-row">
+                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000188</strong></td>
+                        <td class="request-cell" data-label="Solicitante">Pedro Santos</td>
+                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Cascalhamento — 1 serviço</li></ul></td>
+                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
+                        <td class="request-cell" data-label="Situação"><span class="badge badge--neutral">Solicitado</span></td>
+                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000188 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
+                    </tr>
+                    <tr class="request-row">
+                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000184</strong></td>
+                        <td class="request-cell" data-label="Solicitante">João da Silva</td>
+                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>2 serviços</strong><ul><li>Transporte de terra — 5 cargas</li><li>Nivelamento de terreno — 1 serviço</li></ul></td>
+                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="2026-09-07">07/09/2026</time></td>
+                        <td class="request-cell" data-label="Situação"><span class="badge badge--info">Agendado</span></td>
+                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000184 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-card quick-actions" aria-labelledby="quick-actions-title">
+        <header class="card-heading"><div><h2 id="quick-actions-title">Ações rápidas</h2><p id="quick-actions-note">Atalhos disponíveis em breve.</p></div></header>
+        {% comment %}
+            TODO: usar as URLs reais de nova solicitação, listagem e agenda quando
+            essas rotas existirem. Botões temporários, sem ação nem envio de formulário.
+        {% endcomment %}
+        <div class="quick-actions__buttons" role="group" aria-labelledby="quick-actions-title" aria-describedby="quick-actions-note">
+            <button class="dashboard-button dashboard-button--primary" type="button" disabled><i class="fa-solid fa-plus" aria-hidden="true"></i> Nova Solicitação</button>
+            <button class="dashboard-button" type="button" disabled><i class="fa-solid fa-list-ul" aria-hidden="true"></i> Ver Solicitações</button>
+            <button class="dashboard-button" type="button" disabled><i class="fa-regular fa-calendar" aria-hidden="true"></i> Abrir Agenda</button>
+        </div>
+    </section>
+</div>
 
 {% endblock %}

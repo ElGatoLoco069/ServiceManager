@@ -26,10 +26,18 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 SERVER_ENVIRONMENT = os.getenv('SERVER_ENVIRONMENT')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 
+SESSION_COOKIE_AGE = 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# SECURITY WARNING: don't run with debug turned on in production!
 if SERVER_ENVIRONMENT == "development":
     DEBUG = True
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = "Lax"
 
 ALLOWED_HOSTS = ["127.0.0.1", "192.168.1.185"]
 

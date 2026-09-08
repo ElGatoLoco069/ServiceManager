@@ -51,7 +51,7 @@
                 <nav aria-label="Menu do sistema">
                     <ul class="sidebar__nav">
                         <li>
-                            <a class="sidebar__item" href="#"
+                            <a class="sidebar__item" href="{% url 'home' %}"
                                 {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>
                                 <span class="sidebar__icon-box"><i
                                         class="fa-solid fa-chart-line sidebar__nav-icon"
