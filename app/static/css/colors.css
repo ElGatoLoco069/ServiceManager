@@ -1,0 +1,149 @@
+:root,
+html[data-theme="light"] {
+    color-scheme: light;
+    --ui-navy-950: #071e39;
+    --ui-navy-900: #0b2d55;
+    --ui-blue-700: #0c5ea8;
+    --ui-blue-600: #1476c9;
+    --ui-blue-100: #dcecff;
+    --ui-slate-900: #172033;
+    --ui-slate-700: #4b5870;
+    --ui-slate-500: #718096;
+    --ui-slate-300: #cbd5e1;
+    --ui-slate-200: #e2e8f0;
+    --ui-slate-100: #f1f5f9;
+    --ui-slate-50: #f8fafc;
+    --ui-white: #ffffff;
+    --ui-green: #3cb879;
+    --ui-red: #c9363e;
+    --ui-red-light: #fff2f2;
+    --ui-focus: #56a7ed;
+    --ui-shadow: 0 28px 70px rgba(7, 30, 57, 0.16);
+
+    /* ========================================
+       Cores globais da aplicação
+    ======================================== */
+    --color-app-background: var(--ui-slate-50);
+    --color-surface: var(--ui-white);
+    --color-surface-secondary: var(--ui-slate-100);
+    --color-text-primary: var(--ui-slate-900);
+    --color-text-secondary: var(--ui-slate-700);
+    --color-text-disabled: var(--ui-slate-500);
+    --color-primary: var(--ui-blue-600);
+    --color-primary-hover: var(--ui-blue-700);
+    --color-primary-soft: var(--ui-blue-100);
+    --color-border: var(--ui-slate-200);
+    --color-danger: var(--ui-red);
+    --color-danger-soft: var(--ui-red-light);
+    --color-focus: var(--ui-focus);
+    --color-overlay: rgba(7, 30, 57, 0.48);
+    --color-shadow-sidebar: rgba(7, 30, 57, 0.12);
+    --color-shadow-card: rgba(7, 30, 57, 0.08);
+    --color-tooltip-background: var(--ui-navy-950);
+    --color-tooltip-text: var(--ui-white);
+    --color-scrollbar-track: var(--ui-slate-100);
+    --color-scrollbar-thumb: var(--ui-slate-300);
+    --color-success: #197a52;
+    --color-success-soft: #e7f6ef;
+    --color-info: #1769a5;
+    --color-info-soft: #e8f3fb;
+    --color-warning: #9a5b0a;
+    --color-warning-soft: #fff4dd;
+    --color-orange: #a94c16;
+    --color-orange-soft: #fff0e7;
+    --color-purple: #7651a6;
+    --color-purple-soft: #f2ecfb;
+    --color-neutral: #59677d;
+    --color-neutral-soft: #edf1f5;
+    --color-critical: #ad3038;
+    --color-critical-soft: #fcebed;
+    --color-teal: #18766f;
+    --color-teal-soft: #e5f5f3;
+    --color-row-hover: #f4f8fc;
+    --color-progress-track: #e5ebf2;
+    --color-chart-grid: #e6ebf1;
+    --color-backdrop-soft: rgba(7, 30, 57, 0.06);
+    --dashboard-card-shadow: 0 8px 24px rgba(7, 30, 57, 0.06);
+
+    /* ========================================
+       Sidebar e navegação
+    ======================================== */
+    --sidebar-background: var(--color-surface);
+    --sidebar-mobile-header-background: var(--color-surface);
+    --sidebar-text: var(--color-text-secondary);
+    --sidebar-text-active: var(--color-primary);
+    --sidebar-item-hover-background: var(--color-surface-secondary);
+    --sidebar-item-active-background: var(--color-primary-soft);
+    --sidebar-border: var(--color-border);
+    --sidebar-overlay: var(--color-overlay);
+    --sidebar-shadow: var(--color-shadow-sidebar);
+    --sidebar-card-shadow: var(--color-shadow-card);
+    --sidebar-tooltip-background: var(--color-tooltip-background);
+    --sidebar-tooltip-text: var(--color-tooltip-text);
+    --sidebar-focus: var(--color-focus);
+    --sidebar-danger: var(--color-danger);
+    --sidebar-danger-soft: var(--color-danger-soft);
+    --sidebar-badge-background: var(--color-primary-soft);
+    --sidebar-badge-text: var(--color-primary);
+    --sidebar-avatar-background: var(--color-primary-soft);
+    --sidebar-avatar-text: var(--color-primary);
+    --sidebar-scrollbar-track: var(--color-scrollbar-track);
+    --sidebar-scrollbar-thumb: var(--color-scrollbar-thumb);
+    --sidebar-brand-background: var(--color-primary);
+    --sidebar-brand-text: var(--ui-white);
+    --sidebar-icon-background: var(--color-surface-secondary);
+    --sidebar-icon-text: var(--color-text-secondary);
+    --sidebar-prominent-background: var(--color-primary-soft);
+    --sidebar-prominent-text: var(--color-primary-hover);
+    --sidebar-section-text: var(--color-text-disabled);
+    --sidebar-submenu-line: var(--color-border);
+    --sidebar-toggle-background: var(--color-border);
+    --sidebar-toggle-active-background: var(--color-primary);
+    --sidebar-toggle-thumb: var(--color-surface);
+    --sidebar-toggle-shadow: var(--color-shadow-card);
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --color-app-background: #0d1624;
+    --color-surface: #142238;
+    --color-surface-secondary: #1c2d47;
+    --color-text-primary: #edf4ff;
+    --color-text-secondary: #b4c2d8;
+    --color-text-disabled: #788aa5;
+    --color-primary: #6eaeed;
+    --color-primary-hover: #90c5f4;
+    --color-primary-soft: rgba(110, 174, 237, 0.15);
+    --color-border: #2a3c56;
+    --color-danger: #ff7d85;
+    --color-danger-soft: rgba(255, 125, 133, 0.12);
+    --color-focus: #90c5f4;
+    --color-overlay: rgba(0, 0, 0, 0.62);
+    --color-shadow-sidebar: rgba(0, 0, 0, 0.3);
+    --color-shadow-card: rgba(0, 0, 0, 0.2);
+    --color-tooltip-background: #edf4ff;
+    --color-tooltip-text: #142238;
+    --color-scrollbar-track: #142238;
+    --color-scrollbar-thumb: #3a506f;
+    --color-success: #70d6a7;
+    --color-success-soft: rgba(112, 214, 167, 0.14);
+    --color-info: #78bdf0;
+    --color-info-soft: rgba(120, 189, 240, 0.14);
+    --color-warning: #f0bd67;
+    --color-warning-soft: rgba(240, 189, 103, 0.14);
+    --color-orange: #f1a06f;
+    --color-orange-soft: rgba(241, 160, 111, 0.14);
+    --color-purple: #c3a2ee;
+    --color-purple-soft: rgba(195, 162, 238, 0.14);
+    --color-neutral: #a8b6ca;
+    --color-neutral-soft: rgba(168, 182, 202, 0.12);
+    --color-critical: #ff9299;
+    --color-critical-soft: rgba(255, 146, 153, 0.14);
+    --color-teal: #72d5cc;
+    --color-teal-soft: rgba(114, 213, 204, 0.14);
+    --color-row-hover: #182a42;
+    --color-progress-track: #263a55;
+    --color-chart-grid: #2a3c56;
+    --color-backdrop-soft: rgba(0, 0, 0, 0.12);
+    --dashboard-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}

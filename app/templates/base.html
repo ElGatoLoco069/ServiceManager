@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            var theme;
+            try { theme = localStorage.getItem('maqflow-theme'); } catch (error) { theme = null; }
+            if (theme !== 'light' && theme !== 'dark') {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+        }());
+    </script>
+    <link rel="stylesheet" href="{% static 'css/colors.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/fontawesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/font-bindings.css' %}">
+    <link rel="stylesheet" href="{% static 'notifications/toast.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/logo.svg' %}" type="image/x-icon">
+    {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/typography.css' %}">
+    <script src="{% static 'notifications/toast.js' %}" defer></script>
+    <script src="{% static 'js/sidebar.js' %}" defer></script>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="app-page">
+    {% include 'includes/toast_notifications.html' %}
+    <div class="app-layout" data-app-layout>
+        <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+            <header class="sidebar__header">
+                <span class="sidebar__brand-icon" aria-hidden="true"><i
+                        class="fa-solid fa-helmet-safety"></i></span>
+                <div class="sidebar__brand-copy">
+                    <p class="sidebar__brand-title">Service Manager</p>
+                    <p class="sidebar__brand-subtitle">Gestão de Serviços</p>
+                </div>
+                <button class="sidebar__icon-button" type="button" data-sidebar-collapse
+                    aria-label="Recolher menu lateral" aria-controls="sidebar" aria-expanded="true"
+                    title="Recolher menu">
+                    <i class="fa-solid fa-angles-left" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="sidebar__scroll">
+                <p class="sidebar__section-label">Navegação</p>
+                <nav aria-label="Menu do sistema">
+                    <ul class="sidebar__nav">
+                        <li>
+                            <a class="sidebar__item" href="#"
+                                {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>
+                                <span class="sidebar__icon-box"><i
+                                        class="fa-solid fa-chart-line sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span
+                                    class="sidebar__label">Dashboard</span>
+                            </a>
+                        </li>
+                        <!-- TODO: inserir a URL existente de Novo Chamado quando ela for criada. -->
+                        <li><span class="sidebar__item sidebar__item--prominent is-unavailable"
+                                aria-disabled="true" title="Novo Chamado — rota pendente"><span
+                                    class="sidebar__icon-box"><i
+                                        class="fa-solid fa-plus sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span class="sidebar__label">Novo
+                                    Agendamento</span></span></li>
+                        <!-- TODO: inserir a URL existente de Eventos quando ela for criada. -->
+                        <li><span class="sidebar__item is-unavailable" aria-disabled="true"
+                                title="Eventos — rota pendente"><span class="sidebar__icon-box"><i
+                                        class="fa-solid fa-calendar-days sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span
+                                    class="sidebar__label">Agenda</span></span>
+                        </li>
+
+                        {% with current_url=request.resolver_match.url_name %}
+                        <li>
+                            <button class="sidebar__submenu-toggle" type="button" data-sidebar-submenu-toggle
+                                aria-expanded="{% if current_url == 'list_requesters' or current_url == 'new_requester' or current_url == 'detail_requester' or current_url == 'list_operators' or current_url == 'new_operator' or current_url == 'detail_operator' or current_url == 'list_machines' or current_url == 'new_machine' or current_url == 'detail_machine' or current_url == 'list_service' or current_url == 'new_service' or current_url == 'detail_service' %}true{% else %}false{% endif %}"
+                                aria-controls="sidebar-registrations-submenu" title="Cadastros">
+                                <span class="sidebar__icon-box"><i
+                                        class="fa-solid fa-folder-tree sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span
+                                    class="sidebar__label">Cadastros</span><i
+                                    class="fa-solid fa-chevron-down sidebar__chevron" aria-hidden="true"></i>
+                            </button>
+                            <ul class="sidebar__submenu{% if current_url == 'list_requesters' or current_url == 'new_requester' or current_url == 'detail_requester' or current_url == 'list_operators' or current_url == 'new_operator' or current_url == 'detail_operator' or current_url == 'list_machines' or current_url == 'new_machine' or current_url == 'detail_machine' or current_url == 'list_service' or current_url == 'new_service' or current_url == 'detail_service' %} is-open{% endif %}"
+                                id="sidebar-registrations-submenu"
+                                data-sidebar-submenu>
+
+                                <li>
+                                    <a class="sidebar__item" href="#"
+                                        {% if current_url == 'list_service' or current_url == 'new_service' or current_url == 'detail_service' %}aria-current="page"{% endif %}>
+                                        <span class="sidebar__submenu-dot" aria-hidden="true"></span>
+                                        <span class="sidebar__label">Serviços</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </li>
+                        {% endwith %}
+
+                        <li>
+                            <a class="sidebar__item" href="http://helpdesk.cafelandia.pr.gov.br:8000/" target="_blank">
+                                <span class="sidebar__icon-box"><i
+                                        class="fa-solid fa-headset sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span
+                                    class="sidebar__label">Suporte</span>
+                            </a>
+                        </li>
+
+                        <li><span class="sidebar__item is-unavailable" aria-disabled="true"
+                                title="Perfil — rota pendente"><span class="sidebar__icon-box"><i
+                                        class="fa-solid fa-user sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span
+                                    class="sidebar__label">Perfil</span></span>
+                        </li>
+
+                        {% if request.user.is_superuser %}
+                        <li><span class="sidebar__item is-unavailable" aria-disabled="true"
+                                title="Perfil — rota pendente"><span class="sidebar__icon-box"><i
+                                        class="fa-solid fa-cog sidebar__nav-icon"
+                                        aria-hidden="true"></i></span><span
+                                    class="sidebar__label">Configurações</span></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+
+            <footer class="sidebar__footer">
+                <div class="sidebar__user">
+                    <span class="sidebar__avatar" aria-hidden="true">
+                        {% if request.user.is_authenticated %}
+                        {{request.user.first_name|slice:":1"|upper }}{{request.user.last_name|slice:":1"|upper }}
+                        {% else %}
+                        <i class="fa-solid fa-user"></i>
+                        {% endif %}</span>
+                    <div class="sidebar__user-copy">
+                        <p class="sidebar__user-name">{% if request.user.is_authenticated %}
+                            {{request.user.get_full_name|default:request.user.username }}{% else %}Visitante{% endif %}
+                        </p>
+                        <p class="sidebar__user-role">{% if request.user.is_authenticated %}Conta autenticada
+                            {%else %}Sessão local{% endif %}</p>
+                    </div>
+                </div>
+                <div class="sidebar__footer-actions">
+                    <button class="sidebar__action sidebar__theme-toggle" type="button" role="switch"
+                        data-theme-toggle aria-checked="false" aria-label="Ativar tema escuro" title="Escuro">
+                        <span class="sidebar__icon-box"><i class="fa-solid fa-moon sidebar__nav-icon"
+                                data-theme-icon aria-hidden="true"></i></span>
+                        <span class="sidebar__label" data-theme-label>Escuro</span>
+                        <span class="sidebar__toggle-track" aria-hidden="true"><span
+                                class="sidebar__toggle-thumb"></span></span>
+                    </button>
+                    <!-- TODO: substituir por link ou formulário usando a rota e o método reais quando o logout for implementado. -->
+                    <form method="POST" action="{% url 'logout' %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button
+                            type="submit"
+                            class="sidebar__action sidebar__logout"
+                            title="Sair"
+                            aria-label="Sair do sistema">
+                            <span class="sidebar__icon-box">
+                                <i
+                                    class="fa-solid fa-right-from-bracket sidebar__nav-icon"
+                                    aria-hidden="true"
+                                ></i>
+                            </span>
+
+                            <span class="sidebar__label">Sair</span>
+                        </button>
+                    </form>
+                </div>
+            </footer>
+        </aside>
+
+        <button class="sidebar-overlay" type="button" data-sidebar-overlay aria-label="Fechar menu lateral"
+            aria-hidden="true" tabindex="-1"></button>
+
+        <div class="main-wrapper">
+            <header class="mobile-header">
+                <button class="mobile-header__menu" type="button" data-sidebar-mobile-toggle
+                    aria-label="Abrir menu lateral" aria-controls="sidebar" aria-expanded="false"><i
+                        class="fa-solid fa-bars" aria-hidden="true"></i></button>
+                <span class="mobile-header__brand-icon" aria-hidden="true"><i
+                        class="fa-solid fa-headset"></i></span>
+                <p class="mobile-header__title">Service Manager</p>
+            </header>
+            <main class="main-content" id="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

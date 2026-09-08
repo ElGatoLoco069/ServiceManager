@@ -1,0 +1,35 @@
+<div class="toast-container" data-toast-container aria-live="polite" aria-atomic="false">
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+                <div class="app-toast app-toast--success" data-toast data-duration="5000" role="status">
+                    <span class="app-toast__icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+                    <div class="app-toast__content"><strong class="app-toast__title">Sucesso</strong><p class="app-toast__message">{{ message }}</p></div>
+                    <button class="app-toast__close" type="button" data-toast-close aria-label="Fechar notificação"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                    <span class="app-toast__progress" data-toast-progress aria-hidden="true"></span>
+                </div>
+            {% elif 'warning' in message.tags %}
+                <div class="app-toast app-toast--warning" data-toast data-duration="5000" role="status">
+                    <span class="app-toast__icon" aria-hidden="true"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    <div class="app-toast__content"><strong class="app-toast__title">Atenção</strong><p class="app-toast__message">{{ message }}</p></div>
+                    <button class="app-toast__close" type="button" data-toast-close aria-label="Fechar notificação"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                    <span class="app-toast__progress" data-toast-progress aria-hidden="true"></span>
+                </div>
+            {% elif 'error' in message.tags or 'danger' in message.tags %}
+                <div class="app-toast app-toast--error" data-toast data-duration="5000" role="alert">
+                    <span class="app-toast__icon" aria-hidden="true"><i class="fa-solid fa-circle-exclamation"></i></span>
+                    <div class="app-toast__content"><strong class="app-toast__title">Erro</strong><p class="app-toast__message">{{ message }}</p></div>
+                    <button class="app-toast__close" type="button" data-toast-close aria-label="Fechar notificação"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                    <span class="app-toast__progress" data-toast-progress aria-hidden="true"></span>
+                </div>
+            {% else %}
+                <div class="app-toast app-toast--info" data-toast data-duration="5000" role="status">
+                    <span class="app-toast__icon" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span>
+                    <div class="app-toast__content"><strong class="app-toast__title">Informação</strong><p class="app-toast__message">{{ message }}</p></div>
+                    <button class="app-toast__close" type="button" data-toast-close aria-label="Fechar notificação"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                    <span class="app-toast__progress" data-toast-progress aria-hidden="true"></span>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>

@@ -1,0 +1,140 @@
+/* Ajuste tipográfico exclusivo das páginas internas do sistema. */
+body.app-page {
+    font-size: 17px;
+}
+
+/* Navegação e estrutura global */
+.app-page .sidebar__brand-title {
+    font-size: 17px;
+}
+
+.app-page .sidebar__brand-subtitle {
+    font-size: 12px;
+}
+
+.app-page .sidebar__section-label,
+.app-page .sidebar__user-role {
+    font-size: 11px;
+}
+
+.app-page .sidebar__item,
+.app-page .sidebar__submenu-toggle {
+    font-size: 15px;
+}
+
+.app-page .sidebar__submenu .sidebar__item,
+.app-page .sidebar__user-name,
+.app-page .sidebar__action {
+    font-size: 14px;
+}
+
+.app-page .sidebar__avatar {
+    font-size: 13px;
+}
+
+.app-page .mobile-header__title {
+    font-size: 16px;
+}
+
+/* Cabeçalhos das páginas */
+.app-page .dashboard__intro h1,
+.app-page .records-page__intro h1 {
+    font-size: clamp(25px, 2.4vw, 33px);
+}
+
+.app-page .dashboard__intro p,
+.app-page .records-page__intro p {
+    font-size: 15px;
+}
+
+.app-page .card-heading h2,
+.app-page .records-card__heading h2 {
+    font-size: 19px;
+}
+
+.app-page .card-heading p,
+.app-page .records-card__heading p {
+    font-size: 12px;
+}
+
+/* Dashboard */
+.app-page .dashboard-search input,
+.app-page .new-service-button,
+.app-page .summary-card__label,
+.app-page .schedule-item time,
+.app-page .schedule-item__details strong,
+.app-page .fleet-list li,
+.app-page .fleet-list li strong {
+    font-size: 13px;
+}
+
+.app-page .summary-card__result strong {
+    font-size: 28px;
+}
+
+.app-page .summary-card__result span,
+.app-page .schedule-item__details span,
+.app-page .badge,
+.app-page .requests-table__header,
+.app-page .request-cell--protocol span,
+.app-page .alert div span {
+    font-size: 11px;
+}
+
+.app-page .card-link,
+.app-page .request-cell--protocol strong {
+    font-size: 12px;
+}
+
+.app-page .request-row,
+.app-page .alert strong {
+    font-size: 11px;
+}
+
+/* Listagens e filtros */
+.app-page .records-page__new-button,
+.app-page .records-filter input,
+.app-page .records-filter select,
+.app-page .records-table td,
+.app-page .record-person__copy strong {
+    font-size: 13px;
+}
+
+.app-page .records-filter label,
+.app-page .records-filters__summary,
+.app-page .records-table th,
+.app-page .record-person__copy span,
+.app-page .record-meta,
+.app-page .record-status {
+    font-size: 11px;
+}
+
+.app-page .records-filters__reset,
+.app-page .records-empty p {
+    font-size: 12px;
+}
+
+.app-page .records-empty strong {
+    font-size: 15px;
+}
+
+/* Notificações exibidas dentro do sistema */
+.app-page .app-toast__title {
+    font-size: 15px;
+}
+
+.app-page .app-toast__message {
+    font-size: 14px;
+}
+
+@media (max-width: 760px) {
+    .app-page .card-heading h2,
+    .app-page .records-card__heading h2 {
+        font-size: 17px;
+    }
+
+    .app-page .request-cell::before,
+    .app-page .records-table tbody td::before {
+        font-size: 10px;
+    }
+}

@@ -1,0 +1,184 @@
+{% load static %}
+ 
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b2d55">
+    <title>Entrar | Service Manager</title>
+    <script>
+        (function () {
+            var theme;
+            try { theme = localStorage.getItem('maqflow-theme'); } catch (error) { theme = null; }
+            if (theme !== 'light' && theme !== 'dark') {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+
+            var themeColor = document.querySelector('meta[name="theme-color"]');
+            if (themeColor) {
+                themeColor.setAttribute('content', theme === 'dark' ? '#0d1624' : '#0b2d55');
+            }
+        }());
+    </script>
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/fontawesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/font-bindings.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'notifications/toast.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/logo.svg' %}" type="image/x-icon">
+    <script src="{% static 'js/login.js' %}" defer></script>
+    <script src="{% static 'notifications/toast.js' %}" defer></script>
+</head>
+<body class="login-page">
+    {% include 'includes/toast_notifications.html' %}
+    <a class="login-skip" href="#login-form">Ir para o formulário de acesso</a>
+
+    <main class="login-shell" aria-label="Acesso ao Service Manager">
+        <section class="login-brand" aria-labelledby="brand-heading">
+            <div class="login-decoration" aria-hidden="true">
+                <span class="login-circle login-circle--large"></span>
+                <span class="login-circle login-circle--small"></span>
+                <span class="login-square"></span>
+            </div>
+
+            <header class="login-brand-header">
+                <div class="login-logo" aria-hidden="true">
+                    <i class="fa-solid fa-helmet-safety login-logo-icon"></i>
+                </div>
+                <div>
+                    <p class="login-product">Service Manager</p>
+                    <p class="login-institution">Prefeitura Municipal de Cafelândia</p>
+                </div>
+            </header>
+
+            <div class="login-brand-copy">
+                <p class="login-environment">
+                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                    Ambiente de suporte
+                </p>
+                <h1 id="brand-heading">Gestão simples, ágil e organizada.</h1>
+                <p class="login-description">
+                    Cadastre máquinas, motoristas e solicitantes, agende serviços e acompanhe todas as atividades em um só lugar.
+                </p>
+            </div>
+
+            <div class="login-benefits" aria-label="Recursos do portal">
+                <article class="login-benefit">
+                    <span class="login-benefit-number" aria-hidden="true">01</span>
+                    <h2>Acompanhamento</h2>
+                    <p>Consulte o andamento dos seus chamados.</p>
+                </article>
+                <article class="login-benefit">
+                    <span class="login-benefit-number" aria-hidden="true">02</span>
+                    <h2>Acesso seguro</h2>
+                    <p>Autenticação integrada ao domínio.</p>
+                </article>
+                <article class="login-benefit">
+                    <span class="login-benefit-number" aria-hidden="true">03</span>
+                    <h2>Mais agilidade</h2>
+                    <p>Centralize solicitações em um único lugar.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="login-access" aria-labelledby="login-heading">
+            <div class="login-form-wrap">
+                <header class="login-mobile-brand" aria-label="Service Manager — Prefeitura Municipal">
+                    <div class="login-logo login-logo--mobile" aria-hidden="true">
+                        <i class="fa-solid fa-helmet-safety login-logo-icon"></i>
+                    </div>
+                    <div>
+                        <p class="login-product">Service Manager</p>
+                        <p class="login-institution">Prefeitura Municipal de Cafelândia</p>
+                    </div>
+                </header>
+
+                <div class="login-intro">
+                    <p class="login-eyebrow">Acesso ao portal</p>
+                    <h2 id="login-heading">Bem-vindo de volta</h2>
+                    <p>Entre com as mesmas credenciais utilizadas no computador.</p>
+                </div>
+
+                <form id="login-form" class="login-form"
+                    action="{% url 'auth' %}" method="post" data-login-form>
+                    {% csrf_token %}
+
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+                    
+                    <div class="login-field">
+                        <label for="id_username">Usuário</label>
+                        <div class="login-input-shell">
+                            <i class="fa-solid fa-user login-field-icon" aria-hidden="true"></i>
+                            <input
+                                type="text"
+                                name="username"
+                                id="id_username"
+                                value=""
+                                placeholder="Informe seu usuário"
+                                autocomplete="username"
+                                autocapitalize="none"
+                                spellcheck="false"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label for="id_password">Senha</label>
+                        <div class="login-input-shell">
+                            <i class="fa-solid fa-lock login-field-icon" aria-hidden="true"></i>
+                            <input
+                                type="password"
+                                name="password"
+                                id="id_password"
+                                placeholder="Informe sua senha"
+                                autocomplete="current-password"
+                                required
+                            >
+                            <button
+                                class="login-password-toggle"
+                                type="button"
+                                aria-label="Mostrar senha"
+                                aria-pressed="false"
+                                data-password-toggle
+                            >
+                                <i class="fa-regular fa-eye login-eye" data-password-icon aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="login-options">
+                        <label class="login-remember" for="remember-username">
+                            <input type="checkbox" id="remember-username" data-remember-username>
+                            <span aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                            Manter meu usuário
+                        </label>
+                        <a href="#login-help">Problemas para acessar?</a>
+                    </div>
+
+                    <button class="login-submit" type="submit" data-submit-button>
+                        <i class="fa-solid fa-spinner fa-spin-pulse login-spinner" aria-hidden="true" hidden></i>
+                        <span data-submit-text>Entrar no sistema</span>
+                    </button>
+                </form>
+
+                <aside class="login-help" id="login-help" aria-labelledby="login-help-title">
+                    <i class="fa-solid fa-circle-question login-help-icon" aria-hidden="true"></i>
+                    <div>
+                        <h3 id="login-help-title">Precisa de ajuda?</h3>
+                        <p>Em caso de bloqueio ou dificuldade de acesso, entre em contato com a equipe de TI pelos canais internos.</p>
+                    </div>
+                </aside>
+
+                <p class="login-restricted">
+                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    Acesso exclusivo para usuários autorizados.
+                </p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
