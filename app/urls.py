@@ -20,6 +20,8 @@ from django.urls import path
 from accounts.views import AuthenticationView, logout_view
 from dashboard.views import HomeView
 
+from registers.views import ListServiceTypeView, CreateServiceTypeView, UpdateServiceTypeView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', AuthenticationView.as_view(), name="auth_clean"),
@@ -27,4 +29,8 @@ urlpatterns = [
     path('accounts/logout/', logout_view.as_view(), name='logout'),
 
     path("dashboard/home/", HomeView.as_view(), name="home"),
+
+    path("registers/list_services/", ListServiceTypeView.as_view(), name="list_services"),
+    path("registers/create_service/", CreateServiceTypeView.as_view(), name=("create_service")),
+    path("registers/update_service/<str:uuid>/", UpdateServiceTypeView.as_view(), name="update_service"),
 ]

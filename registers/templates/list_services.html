@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{# Reutiliza os componentes de cards existentes, sem modificar os estilos do Dashboard. #}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/service_types.css' %}?v=20260909-row-actions">
+{% endblock %}
+
+{% block extra_head %}
+<title>Tipos de Serviço | Service Manager</title>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/service_types.js' %}?v=20260909-update-service" defer></script>
+{% endblock %}
+
+{% block content %}
+{% comment %}
+    A view ListServiceTypeView fornece a coleção "services".
+    A pesquisa, o filtro de situação e os indicadores usam as linhas renderizadas.
+    Cadastro e edição usam os endpoints existentes; detalhes reutilizam a mesma modal.
+    Os detalhes reutilizam os dados enviados pela view, sem novas requisições.
+{% endcomment %}
+{% with total_services=services|length %}
+<div class="records-page service-types-page" data-service-types-page>
+    <header class="records-page__header">
+        <div class="records-page__intro">
+            <h1>Tipos de Serviço</h1>
+            <p>Gerencie os tipos de serviço disponíveis para utilização nas solicitações.</p>
+        </div>
+        <button class="service-types-button service-types-button--primary" type="button"
+            data-service-type-create-open aria-haspopup="dialog" aria-controls="service-type-modal">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i> Novo tipo de serviço
+        </button>
+    </header>
+
+    <section aria-label="Indicadores de tipos de serviço">
+        <dl class="summary-grid">
+            <div class="summary-card summary-card--info">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span><span class="summary-card__label">Total</span></dt>
+                <dd class="summary-card__result"><strong data-service-types-count="total">{{ total_services }}</strong></dd>
+            </div>
+            <div class="summary-card summary-card--success">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span><span class="summary-card__label">Ativos</span></dt>
+                <dd class="summary-card__result"><strong data-service-types-count="active">{% if total_services %}—{% else %}0{% endif %}</strong></dd>
+            </div>
+            <div class="summary-card summary-card--neutral">
+                <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-circle-xmark"></i></span><span class="summary-card__label">Inativos</span></dt>
+                <dd class="summary-card__result"><strong data-service-types-count="inactive">{% if total_services %}—{% else %}0{% endif %}</strong></dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="records-card" aria-labelledby="service-types-list-title">
+        <header class="records-card__heading">
+            <div><h2 id="service-types-list-title">Tipos cadastrados</h2><p>Consulte os tipos de serviço e sua situação.</p></div>
+        </header>
+
+        <div class="records-filters" role="search" aria-label="Filtrar tipos de serviço">
+            <div class="records-filter records-filter--search">
+                <label for="service-type-search">Pesquisar tipo de serviço</label>
+                <div class="records-filter__input">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input id="service-type-search" type="search" placeholder="Digite o nome do tipo de serviço..."
+                        autocomplete="off" aria-controls="service-types-table" data-service-types-search>
+                </div>
+            </div>
+            <div class="records-filter">
+                <label for="service-type-status">Situação</label>
+                <select id="service-type-status" aria-controls="service-types-table" data-service-types-status>
+                    <option value="all">Todos</option>
+                    <option value="active">Ativos</option>
+                    <option value="inactive">Inativos</option>
+                </select>
+            </div>
+            <button class="records-filters__reset" type="button" data-service-types-reset disabled>
+                <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> Limpar filtros
+            </button>
+        </div>
+
+        <p class="records-filters__summary" role="status" aria-live="polite" aria-atomic="true" data-service-types-summary>Exibindo {{ total_services }} de {{ total_services }} tipo{{ total_services|pluralize }} de serviço.</p>
+        <noscript><p class="service-types-note">Ative o JavaScript para abrir as modais, visualizar os indicadores de situação e utilizar a pesquisa e o filtro. A listagem continua disponível abaixo.</p></noscript>
+
+        <div class="records-table-wrapper" role="region" aria-labelledby="service-types-list-title" tabindex="0" data-service-types-table-wrapper{% if not services %} hidden{% endif %}>
+            <table class="records-table" id="service-types-table">
+                <caption class="service-types-sr-only">Tipos de serviço cadastrados, em ordem alfabética.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Tipo de serviço</th>
+                        <th scope="col">Situação</th>
+                        <th scope="col">Criado em</th>
+                        <th scope="col">Criado por</th>
+                        <th scope="col">Atualizado em</th>
+                        <th scope="col">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    {% with service_status=service.is_active|yesno:"active,inactive" %}
+                    <tr data-service-type-row data-service-type-status="{{ service_status }}"
+                        data-service-type-unit="{{ service.default_unit|default_if_none:'' }}"
+                        data-service-type-update-url="{% url 'update_service' uuid=service.public_id %}">
+                        <th scope="row" data-label="Tipo de serviço">
+                            <span class="service-type-name" data-service-type-name>{{ service.name }}</span>
+                        </th>
+                        <td data-label="Situação">
+                            <span class="record-status record-status--{{ service_status }}">
+                                <i class="fa-solid fa-circle-{{ service.is_active|yesno:'check,xmark' }}" aria-hidden="true"></i>
+                                {{ service.is_active|yesno:"Ativo,Inativo" }}
+                            </span>
+                        </td>
+                        <td data-label="Criado em" data-service-type-created-at>
+                            {% if service.created_at %}
+                            <time datetime="{{ service.created_at|date:'c' }}">{{ service.created_at|date:"d/m/Y H:i" }}</time>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td data-label="Criado por" data-service-type-created-by>
+                            {% if service.created_by %}
+                            {{ service.created_by.get_full_name|default:service.created_by.username }}
+                            {% else %}<span aria-label="Não informado">—</span>{% endif %}
+                        </td>
+                        <td data-label="Atualizado em">
+                            <span data-service-type-updated-at>
+                            {% if service.updated_at %}
+                            <time datetime="{{ service.updated_at|date:'c' }}">{{ service.updated_at|date:"d/m/Y H:i" }}</time>
+                            {% else %}—{% endif %}
+                            </span>
+                            <span data-service-type-updated-by hidden>
+                                {% if service.updated_by %}
+                                {{ service.updated_by.get_full_name|default:service.updated_by.username }}
+                                {% else %}—{% endif %}
+                            </span>
+                        </td>
+                        <td data-label="Ações">
+                            <div class="service-types-actions">
+                                <button class="service-types-icon-button service-types-icon-button--row-action" type="button"
+                                    data-service-type-details-open aria-haspopup="dialog" aria-controls="service-type-modal"
+                                    aria-label="Visualizar {{ service.name }}" title="Visualizar tipo de serviço">
+                                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                </button>
+                                <button class="service-types-icon-button service-types-icon-button--row-action" type="button"
+                                    data-service-type-edit-open aria-haspopup="dialog" aria-controls="service-type-modal"
+                                    aria-label="Editar {{ service.name }}" title="Editar tipo de serviço">
+                                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Renderiza o estado vazio mesmo sem JavaScript quando a coleção não tem registros. #}
+        <div class="records-empty" data-service-types-empty{% if services %} hidden{% endif %}>
+            <span class="records-empty__icon" aria-hidden="true"><i class="fa-solid fa-list-check" data-service-types-empty-icon></i></span>
+            <strong data-service-types-empty-title>Nenhum tipo de serviço cadastrado.</strong>
+            <p data-service-types-empty-description>Os tipos de serviço cadastrados aparecerão aqui.</p>
+        </div>
+
+        <footer class="records-card__footer">
+            <p id="service-types-actions-note">Cadastro e edição são enviados pelos endpoints do sistema.</p>
+        </footer>
+    </section>
+
+    {% comment %}
+        Uma modal compartilhada para cadastro, detalhes e edição, sem duplicar formulário.
+        Cadastro e edição utilizam os endpoints create_service e update_service.
+    {% endcomment %}
+    <dialog class="service-type-modal" id="service-type-modal" data-service-type-modal
+        aria-labelledby="service-type-modal-title" aria-describedby="service-type-modal-description">
+        <header class="service-type-modal__header">
+            <span class="service-type-modal__icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+            <div class="service-type-modal__intro">
+                <h2 id="service-type-modal-title" data-service-type-modal-title tabindex="-1">Novo tipo de serviço</h2>
+                <p id="service-type-modal-description" data-service-type-modal-description>Defina o serviço que poderá ser utilizado nas solicitações.</p>
+            </div>
+            <button class="service-types-icon-button" type="button" data-service-type-modal-close
+                aria-label="Fechar modal de tipo de serviço" title="Fechar">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <form class="service-type-modal__form" method="post" action="{% url 'create_service' %}"
+            data-service-type-create-form data-service-type-create-url="{% url 'create_service' %}">
+        {% csrf_token %}
+        <div class="service-type-modal__body">
+            <div class="service-type-modal__form-fields" data-service-type-modal-fields>
+                <div class="service-type-modal__field">
+                    <label for="service-type-name">Nome do tipo de serviço <span aria-hidden="true">*</span></label>
+                    <input id="service-type-name" name="name" type="text" maxlength="150" required
+                        placeholder="Ex.: Transporte de terra" aria-describedby="service-type-name-help"
+                        data-service-type-name-input>
+                    <p id="service-type-name-help">Informe um nome com até 150 caracteres.</p>
+                </div>
+
+                <div class="service-type-modal__fields">
+                    <div class="service-type-modal__field">
+                        <label for="service-type-unit">Unidade padrão <span aria-hidden="true">*</span></label>
+                        <input id="service-type-unit" name="default_unit" type="text" maxlength="50" required
+                            placeholder="Ex.: cargas" aria-describedby="service-type-unit-help"
+                            data-service-type-unit-input>
+                        <p id="service-type-unit-help">Exemplos: cargas, horas ou serviços.</p>
+                    </div>
+                    <div class="service-type-modal__field">
+                        <span class="service-type-modal__field-label" id="service-type-status-label">Situação</span>
+                        <button class="service-type-status-toggle" id="service-type-status-input" type="button"
+                            role="switch" aria-checked="true"
+                            aria-labelledby="service-type-status-label service-type-status-text"
+                            data-service-type-status-input>
+                            <span class="service-type-status-toggle__text" id="service-type-status-text"
+                                data-service-type-status-text>Ativo</span>
+                            <span class="service-type-status-toggle__track" aria-hidden="true">
+                                <span class="service-type-status-toggle__thumb"></span>
+                            </span>
+                        </button>
+                        <input type="hidden" name="is_active" value="True" data-service-type-status-value>
+                    </div>
+                </div>
+            </div>
+
+            <dl class="service-type-modal__details" data-service-type-modal-details hidden>
+                <div class="service-type-modal__detail service-type-modal__detail--wide">
+                    <dt>Tipo de serviço</dt><dd data-service-type-detail="name">—</dd>
+                </div>
+                <div class="service-type-modal__detail">
+                    <dt>Unidade padrão</dt><dd data-service-type-detail="unit">—</dd>
+                </div>
+                <div class="service-type-modal__detail">
+                    <dt>Situação</dt>
+                    <dd><span class="record-status" data-service-type-detail-status>
+                        <i class="fa-solid fa-circle-check" aria-hidden="true" data-service-type-detail-status-icon></i>
+                        <span data-service-type-detail-status-text></span>
+                    </span></dd>
+                </div>
+                <div class="service-type-modal__detail">
+                    <dt>Criado em</dt><dd data-service-type-detail="createdAt">—</dd>
+                </div>
+                <div class="service-type-modal__detail">
+                    <dt>Criado por</dt><dd data-service-type-detail="createdBy">—</dd>
+                </div>
+                <div class="service-type-modal__detail">
+                    <dt>Atualizado em</dt><dd data-service-type-detail="updatedAt">—</dd>
+                </div>
+                <div class="service-type-modal__detail">
+                    <dt>Atualizado por</dt><dd data-service-type-detail="updatedBy">—</dd>
+                </div>
+            </dl>
+
+        </div>
+
+        <footer class="service-type-modal__footer">
+            <button class="service-types-button" type="button" data-service-type-modal-close data-service-type-modal-cancel>Cancelar</button>
+            <button class="service-types-button service-types-button--primary" type="button" data-service-type-modal-edit hidden>
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Editar
+            </button>
+            <button class="service-types-button service-types-button--primary" type="submit"
+                data-service-type-modal-save>
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                <span data-service-type-modal-save-label>Salvar</span>
+            </button>
+        </footer>
+        </form>
+    </dialog>
+</div>
+{% endwith %}
+{% endblock %}

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'dashboard',
+    'registers',
     'settings',
 ]
 
@@ -142,3 +143,16 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "app" / "static",
 ]
+
+JAZZMIN_SETTINGS = {
+    # ... other settings
+    
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.group": "fas fa-users",
+        "registers.ServiceType": "fas fa-file-alt", 
+
+        "settings.DomainSetting": "fas fa-earth-americas"
+    },
+}

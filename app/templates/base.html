@@ -77,7 +77,7 @@
                         {% with current_url=request.resolver_match.url_name %}
                         <li>
                             <button class="sidebar__submenu-toggle" type="button" data-sidebar-submenu-toggle
-                                aria-expanded="{% if current_url == 'list_requesters' or current_url == 'new_requester' or current_url == 'detail_requester' or current_url == 'list_operators' or current_url == 'new_operator' or current_url == 'detail_operator' or current_url == 'list_machines' or current_url == 'new_machine' or current_url == 'detail_machine' or current_url == 'list_service' or current_url == 'new_service' or current_url == 'detail_service' %}true{% else %}false{% endif %}"
+                                aria-expanded="{% if current_url == 'list_services' %}true{% else %}false{% endif %}"
                                 aria-controls="sidebar-registrations-submenu" title="Cadastros">
                                 <span class="sidebar__icon-box"><i
                                         class="fa-solid fa-folder-tree sidebar__nav-icon"
@@ -85,13 +85,13 @@
                                     class="sidebar__label">Cadastros</span><i
                                     class="fa-solid fa-chevron-down sidebar__chevron" aria-hidden="true"></i>
                             </button>
-                            <ul class="sidebar__submenu{% if current_url == 'list_requesters' or current_url == 'new_requester' or current_url == 'detail_requester' or current_url == 'list_operators' or current_url == 'new_operator' or current_url == 'detail_operator' or current_url == 'list_machines' or current_url == 'new_machine' or current_url == 'detail_machine' or current_url == 'list_service' or current_url == 'new_service' or current_url == 'detail_service' %} is-open{% endif %}"
+                            <ul class="sidebar__submenu{% if current_url == 'list_services' %} is-open{% endif %}"
                                 id="sidebar-registrations-submenu"
                                 data-sidebar-submenu>
 
                                 <li>
-                                    <a class="sidebar__item" href="#"
-                                        {% if current_url == 'list_service' or current_url == 'new_service' or current_url == 'detail_service' %}aria-current="page"{% endif %}>
+                                    <a class="sidebar__item" href="{% url 'list_services' %}"
+                                        {% if current_url == 'list_services' or current_url == 'new_service' or current_url == 'detail_service' %}aria-current="page"{% endif %}>
                                         <span class="sidebar__submenu-dot" aria-hidden="true"></span>
                                         <span class="sidebar__label">Serviços</span>
                                     </a>
