@@ -152,6 +152,10 @@ a {
     list-style: none;
 }
 
+.sidebar__nav a {
+    text-decoration: none;
+}
+
 .sidebar__item,
 .sidebar__submenu-toggle,
 .sidebar__action {

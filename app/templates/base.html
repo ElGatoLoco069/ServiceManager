@@ -60,18 +60,25 @@
                             </a>
                         </li>
                         <!-- TODO: inserir a URL existente de Novo Chamado quando ela for criada. -->
-                        <li><span class="sidebar__item sidebar__item--prominent is-unavailable"
+                        <li>
+                            <a href="{% url 'service_request_form' %}">
+                                <span class="sidebar__item sidebar__item--prominent is-unavailable"
                                 aria-disabled="true" title="Novo Chamado — rota pendente"><span
                                     class="sidebar__icon-box"><i
                                         class="fa-solid fa-plus sidebar__nav-icon"
                                         aria-hidden="true"></i></span><span class="sidebar__label">Novo
-                                    Agendamento</span></span></li>
+                                    Solicitação</span></span>
+                            </a>
+                        </li>
                         <!-- TODO: inserir a URL existente de Eventos quando ela for criada. -->
-                        <li><span class="sidebar__item is-unavailable" aria-disabled="true"
+                        <li>
+                            <a href="{% url 'view_diary' %}">
+                                <span class="sidebar__item is-unavailable" aria-disabled="true"
                                 title="Eventos — rota pendente"><span class="sidebar__icon-box"><i
                                         class="fa-solid fa-calendar-days sidebar__nav-icon"
                                         aria-hidden="true"></i></span><span
                                     class="sidebar__label">Agenda</span></span>
+                            </a>
                         </li>
 
                         {% with current_url=request.resolver_match.url_name %}

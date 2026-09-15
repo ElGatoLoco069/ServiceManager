@@ -21,6 +21,8 @@ from accounts.views import AuthenticationView, logout_view
 from dashboard.views import HomeView
 
 from registers.views import ListServiceTypeView, CreateServiceTypeView, UpdateServiceTypeView
+from diary.views import DiaryView
+from service_request.views import CreateServiceRequestView, ServiceRequestFormView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,4 +35,16 @@ urlpatterns = [
     path("registers/list_services/", ListServiceTypeView.as_view(), name="list_services"),
     path("registers/create_service/", CreateServiceTypeView.as_view(), name=("create_service")),
     path("registers/update_service/<str:uuid>/", UpdateServiceTypeView.as_view(), name="update_service"),
+
+    path("diary/view/", DiaryView.as_view(), name="view_diary"),
+    path(
+        "service_request/service_request_form/",
+        ServiceRequestFormView.as_view(),
+        name="service_request_form",
+    ),
+    path(
+        "service_request/create_service_request/",
+        CreateServiceRequestView.as_view(),
+        name="create_service_request",
+    ),
 ]

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}<title>Registrar solicitação de serviço | Service Manager</title>{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/service_request.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/service_request.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="service-request" data-service-request>
+    <header class="service-request__header">
+        <p class="service-request__eyebrow">Novo atendimento</p>
+        <h1>Registrar solicitação de serviço</h1>
+    </header>
+
+    <form class="service-request__form" action="{% url 'create_service_request' %}" method="post" data-service-request-form>
+        {% csrf_token %}
+        <section class="service-request__section" aria-labelledby="requester-heading">
+            <div class="service-request__section-heading">
+                <span class="service-request__section-number" aria-hidden="true">1</span>
+                <div><h2 id="requester-heading">Solicitante</h2><p>Dados básicos para identificação e contato.</p></div>
+            </div>
+            <div class="service-request__fields service-request__fields--requester">
+                <div class="service-request__field service-request__field--large">
+                    <label for="requester-name">Nome completo <span aria-hidden="true">*</span></label>
+                    <div class="service-request__input-icon"><i class="fa-regular fa-user" aria-hidden="true"></i>
+                        <input id="requester-name" name="requester_name" type="text" autocomplete="name" placeholder="Ex.: João da Silva" required></div>
+                </div>
+                <div class="service-request__field service-request__field--small">
+                    <label for="requester-phone">Telefone <span aria-hidden="true">*</span></label>
+                    <div class="service-request__input-icon"><i class="fa-solid fa-phone" aria-hidden="true"></i>
+                        <input id="requester-phone" name="requester_phone" type="tel" autocomplete="tel" placeholder="(45) 99999-9999" data-mask-phone required></div>
+                </div>
+                <div class="service-request__field service-request__field--small">
+                    <label for="requester-document">CPF/CNPJ</label>
+                    <div class="service-request__input-icon"><i class="fa-regular fa-id-card" aria-hidden="true"></i>
+                        <input id="requester-document" name="requester_document" type="text" inputmode="numeric" placeholder="Ex.: 123.456.789-00" data-mask-document></div>
+                </div>
+                <div class="service-request__field service-request__field--large">
+                    <label for="requester-email">E-mail</label>
+                    <div class="service-request__input-icon"><i class="fa-regular fa-envelope" aria-hidden="true"></i>
+                        <input id="requester-email" name="requester_email" type="email" autocomplete="email" placeholder="joao.silva@exemplo.com"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="service-request__section" aria-labelledby="location-heading">
+            <div class="service-request__section-heading">
+                <span class="service-request__section-number" aria-hidden="true">2</span>
+                <div><h2 id="location-heading">Local do serviço</h2><p>Informe de forma que a equipe consiga encontrar o local.</p></div>
+            </div>
+            <div class="service-request__fields service-request__fields--location">
+                <div class="service-request__field service-request__field--postal">
+                    <label for="service-postal-code">CEP</label>
+                    <div class="service-request__input-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                        <input id="service-postal-code" name="service_postal_code" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="Ex.: 01001-000" aria-describedby="service-cep-status" data-mask-cep></div>
+                    <p class="service-request__cep-status" id="service-cep-status" role="status" aria-live="polite" data-cep-status>Busca automática com 8 dígitos.</p>
+                </div>
+                <div class="service-request__field service-request__field--address">
+                    <label for="service-address">Endereço / Localidade <span aria-hidden="true">*</span></label>
+                    <div class="service-request__input-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                        <input id="service-address" name="service_address" type="text" placeholder="Ex.: Estrada São José" data-service-address required></div>
+                </div>
+                <div class="service-request__field service-request__field--number">
+                    <label for="service-number">Número</label>
+                    <div class="service-request__input-icon"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>
+                        <input id="service-number" name="service_number" type="text" placeholder="Ex.: 123 ou S/N"></div>
+                </div>
+                <div class="service-request__field service-request__field--neighborhood">
+                    <label for="service-neighborhood">Bairro / Comunidade</label>
+                    <div class="service-request__input-icon"><i class="fa-solid fa-map" aria-hidden="true"></i>
+                        <input id="service-neighborhood" name="service_neighborhood" type="text" placeholder="Ex.: Linha São José" data-service-neighborhood></div>
+                </div>
+                <div class="service-request__field service-request__field--landmark">
+                    <label for="service-landmark">Ponto de referência</label>
+                    <div class="service-request__input-icon"><i class="fa-solid fa-signs-post" aria-hidden="true"></i>
+                        <input id="service-landmark" name="service_landmark" type="text" placeholder="Ex.: Próximo à igreja da comunidade"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="service-request__section" aria-labelledby="requested-services-heading">
+            <div class="service-request__section-heading service-request__section-heading--actions">
+                <span class="service-request__section-number" aria-hidden="true">3</span>
+                <div><h2 id="requested-services-heading">Serviços solicitados</h2><p>Uma solicitação pode conter vários serviços.</p></div>
+                <button class="service-request__add" type="button" data-service-add><i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar serviço</button>
+            </div>
+            <div class="service-request__items" data-service-items>
+                <div class="service-request__item" data-service-item>
+                    <span class="service-request__item-number" data-service-number aria-label="Serviço 1">1</span>
+                    <div class="service-request__field service-request__field--service">
+                        <label for="requested-service-1">Serviço <span aria-hidden="true">*</span></label>
+                        <select id="requested-service-1" name="services" data-service-select required>
+                            <option value="">Selecione um serviço</option>
+                            {% for service in context.services %}{% if service.is_active %}
+                            <option value="{{ service.public_id }}" data-unit="{{ service.default_unit|default_if_none:'' }}">{{ service.name }}</option>
+                            {% endif %}{% endfor %}
+                        </select>
+                    </div>
+                    <div class="service-request__field service-request__field--quantity">
+                        <label for="service-quantity-1">Quantidade <span aria-hidden="true">*</span></label>
+                        <input id="service-quantity-1" name="quantities" type="number" min="0.01" step="any" value="1" required>
+                    </div>
+                    <div class="service-request__field service-request__field--unit">
+                        <label for="service-unit-1">Unidade <span aria-hidden="true">*</span></label>
+                        <select id="service-unit-1" name="units" data-unit-select required><option value="">Selecione</option></select>
+                    </div>
+                    <button class="service-request__remove" type="button" data-service-remove aria-label="Remover serviço 1" title="Remover serviço" disabled><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <section class="service-request__section" aria-labelledby="notes-heading">
+            <div class="service-request__section-heading">
+                <span class="service-request__section-number" aria-hidden="true">4</span>
+                <div><h2 id="notes-heading">Observações</h2><p>Inclua somente informações relevantes para execução do serviço.</p></div>
+            </div>
+            <div class="service-request__field">
+                <label class="service-request__sr-only" for="request-notes">Observações</label>
+                <textarea id="request-notes" name="notes" placeholder="Ex.: Terreno acima do nível da estrada; acesso pelo portão lateral..."></textarea>
+            </div>
+        </section>
+
+        <footer class="service-request__footer">
+            <a class="service-request__cancel" href="{% url 'home' %}">Cancelar</a>
+            <button class="service-request__submit" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Registrar solicitação</button>
+        </footer>
+    </form>
+</div>
+{% endblock %}

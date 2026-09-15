@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'accounts',
     'dashboard',
     'registers',
+    'diary',
+    'service_request',
     'settings',
 ]
 

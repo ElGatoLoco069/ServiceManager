@@ -5,6 +5,10 @@
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/home.js' %}" defer></script>
+{% endblock %}
+
 {% block extra_head %}
 <title>Dashboard | Service Manager</title>
 {% endblock %}
@@ -12,10 +16,11 @@
 {% block content %}
 {% now "Y-m-d" as dashboard_today_iso %}
 {% now "d/m/Y" as dashboard_today %}
+{% with awaiting_requests=context.awaiting_service_request %}
+{% with awaiting_count=awaiting_requests|length %}
 {% comment %}
-    Dashboard visual: indicadores e registros fictícios, exclusivos deste template.
-    A data atual contextualiza a demonstração. Nenhum dado é consultado ou persistido.
-    TODO: substituir os exemplos pelo contexto real quando o backend estiver pronto.
+    As solicitações aguardando agendamento vêm do contexto real do Dashboard.
+    Os demais indicadores, a agenda e a tabela recente continuam demonstrativos.
 {% endcomment %}
 <div class="dashboard">
     <header class="dashboard__header">
@@ -25,7 +30,7 @@
         </div>
         <div class="dashboard__meta">
             <time class="dashboard__date" datetime="{{ dashboard_today_iso }}"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ dashboard_today }}</time>
-            <span class="dashboard__demo">Dados de demonstração</span>
+            <span class="dashboard__demo">Demais dados: demonstração</span>
         </div>
     </header>
 
@@ -37,7 +42,10 @@
             </div>
             <div class="summary-card summary-card--warning">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span><span class="summary-card__label">Aguardando agendamento</span></dt>
-                <dd class="summary-card__result"><strong>3</strong><span>serviços pendentes</span></dd>
+                <dd class="summary-card__result">
+                    <strong>{{ awaiting_count }}</strong>
+                    <span>{% if awaiting_count == 1 %}solicitação pendente{% else %}solicitações pendentes{% endif %}</span>
+                </dd>
             </div>
             <div class="summary-card summary-card--info">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></span><span class="summary-card__label">Agendados para hoje</span></dt>
@@ -108,29 +116,34 @@
 
         <section class="dashboard-card pending-card" aria-labelledby="pending-title">
             <header class="card-heading">
-                <div><h2 id="pending-title">Aguardando agendamento</h2><p>Serviços que precisam de uma data.</p></div>
-                <span class="pending-card__icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+                <div><h2 id="pending-title">Aguardando agendamento</h2><p>Solicitações recebidas que ainda precisam de uma data.</p></div>
+                <div class="pending-card__summary">
+                    <span class="dashboard-count">{{ awaiting_count }} {% if awaiting_count == 1 %}solicitação{% else %}solicitações{% endif %}</span>
+                    <span class="pending-card__icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+                </div>
             </header>
+            {% if awaiting_requests %}
             <ul class="pending-list">
-                <li class="pending-item">
-                    <span class="pending-item__protocol">SRV-2026-000190</span>
-                    <strong>Carlos Pereira</strong>
-                    <p>Transporte de cascalho <span class="pending-item__quantity">— 4 cargas</span></p>
-                    <span class="pending-item__date">Solicitado em <time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></span>
-                </li>
-                <li class="pending-item">
-                    <span class="pending-item__protocol">SRV-2026-000187</span>
-                    <strong>Marcos Souza</strong>
-                    <p>Cascalhamento <span class="pending-item__quantity">— 1 serviço</span></p>
-                    <span class="pending-item__date">Solicitado em <time datetime="2026-09-07">07/09/2026</time></span>
-                </li>
-                <li class="pending-item">
-                    <span class="pending-item__protocol">SRV-2026-000186</span>
-                    <strong>Luciana Alves</strong>
-                    <p>Transporte de terra <span class="pending-item__quantity">— 3 cargas</span></p>
-                    <span class="pending-item__date">Solicitado em <time datetime="2026-09-07">07/09/2026</time></span>
-                </li>
+                {% for service_request in awaiting_requests|slice:":2" %}
+                    {% include "partials/pending_request_item.html" %}
+                {% endfor %}
             </ul>
+            {% if awaiting_count > 2 %}
+            <footer class="pending-card__footer">
+                <span>Mostrando 2 de {{ awaiting_count }}</span>
+                <button class="pending-card__more" type="button" data-pending-modal-open
+                    aria-haspopup="dialog" aria-controls="pending-requests-modal">
+                    Ver mais <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </footer>
+            {% endif %}
+            {% else %}
+            <div class="pending-empty" role="status">
+                <span class="pending-empty__icon" aria-hidden="true"><i class="fa-regular fa-circle-check"></i></span>
+                <strong>Nenhuma solicitação aguardando</strong>
+                <p>As novas solicitações pendentes aparecerão aqui.</p>
+            </div>
+            {% endif %}
         </section>
     </div>
 
@@ -205,5 +218,35 @@
         </div>
     </section>
 </div>
+
+{% if awaiting_count > 2 %}
+<dialog class="pending-modal" id="pending-requests-modal" data-pending-modal
+    aria-labelledby="pending-modal-title" aria-describedby="pending-modal-description">
+    <header class="pending-modal__header">
+        <span class="pending-modal__icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+        <div class="pending-modal__intro">
+            <h2 id="pending-modal-title" tabindex="-1" data-pending-modal-title>Solicitações aguardando agendamento</h2>
+            <p id="pending-modal-description">Confira todas as {{ awaiting_count }} solicitações que ainda precisam de uma data.</p>
+        </div>
+        <button class="pending-modal__close" type="button" data-pending-modal-close
+            aria-label="Fechar solicitações aguardando agendamento" title="Fechar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </header>
+    <div class="pending-modal__body">
+        <ul class="pending-list pending-modal__list">
+            {% for service_request in awaiting_requests %}
+                {% include "partials/pending_request_item.html" %}
+            {% endfor %}
+        </ul>
+    </div>
+    <footer class="pending-modal__footer">
+        <span>{{ awaiting_count }} {% if awaiting_count == 1 %}solicitação pendente{% else %}solicitações pendentes{% endif %}</span>
+        <button class="pending-modal__button" type="button" data-pending-modal-close>Fechar</button>
+    </footer>
+</dialog>
+{% endif %}
+{% endwith %}
+{% endwith %}
 
 {% endblock %}
