@@ -1,0 +1,213 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b2d55">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Acompanhe os dados públicos e o andamento da sua solicitação.">
+    <title>Detalhes do Protocolo | Service Manager</title>
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/fontawesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/font-bindings.css' %}">
+    <link rel="stylesheet" href="{% static 'notifications/toast.css' %}">
+    <link rel="stylesheet" href="{% static 'css/protocol_search.css' %}">
+    <link rel="stylesheet" href="{% static 'css/protocol_detail.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/logo.svg' %}" type="image/x-icon">
+    <script src="{% static 'notifications/toast.js' %}" defer></script>
+</head>
+
+<body class="protocol-page protocol-detail-page">
+    {% include 'includes/toast_notifications.html' %}
+
+    <a class="protocol-skip-link" href="#protocol-detail-content">Ir para os detalhes da solicitação</a>
+
+    <header class="public-header" aria-label="Cabeçalho da consulta pública">
+        <div class="public-header__inner">
+            <div class="public-header__brand">
+                <span class="public-header__icon" aria-hidden="true">
+                    <i class="fa-solid fa-file-lines"></i>
+                </span>
+                <div>
+                    <p class="public-header__product">Service Manager</p>
+                    <p class="public-header__subtitle">Serviços ao cidadão</p>
+                </div>
+            </div>
+
+            <p class="public-header__context">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                Consulta de Protocolos
+            </p>
+        </div>
+    </header>
+
+    {% comment %}
+        Exibir somente os campos públicos usados abaixo. O nome do solicitante depende de
+        requester_display_name já tratado; não usar dados pessoais, contatos, endereço
+        completo, observações administrativas, IDs ou usuários internos.
+    {% endcomment %}
+    <main class="protocol-detail-main" id="protocol-detail-content">
+        <div class="protocol-detail-shell">
+            <section class="detail-card detail-card--overview" aria-labelledby="protocol-detail-title">
+                <header class="detail-heading">
+                    <div class="detail-heading__title">
+                        <span class="detail-heading__icon" aria-hidden="true">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </span>
+                        <div>
+                            <p class="detail-heading__eyebrow">Acompanhamento público</p>
+                            <h1 id="protocol-detail-title">Detalhes da solicitação</h1>
+                        </div>
+                    </div>
+
+                    {% if context.protocol %}
+                        <span class="protocol-status protocol-status--{{ context.protocol.status }}">
+                            <i class="fa-solid fa-circle" aria-hidden="true"></i>
+                            <span>{{ context.protocol.get_status_display }}</span>
+                        </span>
+                    {% endif %}
+                </header>
+
+                <div class="protocol-highlight" aria-label="Número do protocolo consultado">
+                    <div>
+                        <span class="protocol-highlight__label">Protocolo</span>
+                        <strong class="protocol-highlight__value">{{ context.protocol.protocol }}</strong>
+                    </div>
+                    <i class="fa-solid fa-receipt protocol-highlight__icon" aria-hidden="true"></i>
+                </div>
+
+                <section class="request-information" aria-labelledby="request-information-title">
+                    <div class="section-heading section-heading--compact">
+                        <span class="section-heading__icon" aria-hidden="true">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                        <h2 id="request-information-title">Informações da solicitação</h2>
+                    </div>
+
+                    <dl class="request-information__grid">
+                        {% if context.requester_display_name %}
+                            <div class="request-information__item">
+                                <dt><i class="fa-solid fa-user" aria-hidden="true"></i> Solicitante</dt>
+                                <dd>{{ context.requester_display_name }}</dd>
+                            </div>
+                        {% endif %}
+                        <div class="request-information__item">
+                            <dt><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Data da solicitação</dt>
+                            <dd>
+                                <time datetime="{{ context.protocol.created_at|date:'c' }}">
+                                    {{ context.protocol.created_at|date:"d/m/Y" }} às {{ context.protocol.created_at|date:"H:i" }}
+                                </time>
+                            </dd>
+                        </div>
+                        <div class="request-information__item">
+                            <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Bairro</dt>
+                            <dd>{{ context.protocol.service_neighborhood }}</dd>
+                        </div>
+                        {% if context.protocol.service_landmark %}
+                            <div class="request-information__item">
+                                <dt><i class="fa-solid fa-landmark" aria-hidden="true"></i> Ponto de referência</dt>
+                                <dd>{{ context.protocol.service_landmark }}</dd>
+                            </div>
+                        {% endif %}
+                        <div class="request-information__item">
+                            <dt><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Última atualização</dt>
+                            <dd>
+                                <time datetime="{{ context.protocol.updated_at|date:'c' }}">
+                                    {{ context.protocol.updated_at|date:"d/m/Y" }} às {{ context.protocol.updated_at|date:"H:i" }}
+                                </time>
+                            </dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="request-progress" aria-labelledby="request-progress-title">
+                    <div class="request-progress__heading">
+                        <h2 id="request-progress-title">Etapas do atendimento</h2>
+                        <p>Fluxo geral de uma solicitação</p>
+                    </div>
+                    <ol class="request-progress__steps" aria-label="Solicitado, Agendado, Em andamento e Concluído">
+                        <li><span aria-hidden="true"><i class="fa-solid fa-clock"></i></span>Solicitado</li>
+                        <li><span aria-hidden="true"><i class="fa-solid fa-calendar-check"></i></span>Agendado</li>
+                        <li><span aria-hidden="true"><i class="fa-solid fa-gears"></i></span>Em andamento</li>
+                        <li><span aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>Concluído</li>
+                    </ol>
+                </section>
+            </section>
+
+            <section class="detail-card detail-card--services" aria-labelledby="requested-services-title">
+                <header class="section-heading">
+                    <span class="section-heading__icon" aria-hidden="true">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    <div>
+                        <p class="section-heading__eyebrow">Itens vinculados</p>
+                        <h2 id="requested-services-title">Serviços solicitados</h2>
+                    </div>
+                </header>
+
+                <div class="requested-services">
+                    {% for item in context.protocol_itens %}
+                        <article class="service-item">
+                            <header class="service-item__header">
+                                <h3>{{ item.service }}</h3>
+                                <span class="protocol-status protocol-status--small protocol-status--{{ item.status }}">
+                                    <i class="fa-solid fa-circle" aria-hidden="true"></i>
+                                    <span>{{ item.get_status_display }}</span>
+                                </span>
+                            </header>
+
+                            <dl class="service-item__details">
+                                <div>
+                                    <dt><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Quantidade</dt>
+                                    <dd>{{ item.amount|floatformat:"-2" }}{% if item.unit %} {{ item.unit }}{% endif %}</dd>
+                                </div>
+                                <div>
+                                    <dt><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Agendamento</dt>
+                                    <dd class="service-item__schedule{% if not item.scheduled_for %} service-item__schedule--pending{% endif %}">
+                                        {% if item.scheduled_for %}
+                                            <time datetime="{{ item.scheduled_for|date:'c' }}">
+                                                {{ item.scheduled_for|date:"d/m/Y" }} às {{ item.scheduled_for|date:"H:i" }}
+                                            </time>
+                                        {% else %}
+                                            Aguardando agendamento
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </article>
+                    {% empty %}
+                        <div class="requested-services__empty" role="status">
+                            <span aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+                            <div>
+                                <strong>Nenhum serviço disponível para exibição.</strong>
+                                <p>As informações dos serviços aparecerão aqui quando forem disponibilizadas.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {% if context.public_information %}
+                <section class="detail-card detail-card--additional" aria-labelledby="public-information-title">
+                    <header class="section-heading section-heading--compact">
+                        <span class="section-heading__icon" aria-hidden="true">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                        <h2 id="public-information-title">Informações adicionais</h2>
+                    </header>
+                    <p class="public-information">{{ context.public_information }}</p>
+                </section>
+            {% endif %}
+
+            <div class="protocol-detail-actions">
+                <a class="protocol-back-button" href="{% url 'consult_protocol' %}">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    <span>Consultar outro protocolo</span>
+                </a>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -4,6 +4,109 @@
     var page = document.querySelector("[data-service-request]");
     if (!page) return;
 
+    function ensureHeaderControls() {
+        var header = page.querySelector(".service-request__header");
+        var headerCopy = header.querySelector(".service-request__header-copy");
+        if (!headerCopy) {
+            headerCopy = document.createElement("div");
+            headerCopy.className = "service-request__header-copy";
+            Array.from(header.children).forEach(function (child) {
+                headerCopy.appendChild(child);
+            });
+            header.appendChild(headerCopy);
+        }
+
+        var button = header.querySelector("[data-service-request-clear]");
+        if (!button) {
+            button = document.createElement("button");
+            button.className = "service-request__clear";
+            button.type = "button";
+            button.dataset.serviceRequestClear = "";
+            button.setAttribute("aria-label", "Limpar formulário e apagar rascunho");
+            button.title = "Limpar formulário";
+
+            var icon = document.createElement("i");
+            icon.className = "fa-solid fa-trash";
+            icon.setAttribute("aria-hidden", "true");
+            button.appendChild(icon);
+            button.appendChild(document.createTextNode(" Limpar formulário"));
+            header.appendChild(button);
+        }
+
+        return button;
+    }
+
+    var form = page.querySelector("[data-service-request-form]");
+    var draftStatus = page.querySelector("[data-draft-status]");
+    var clearButton = ensureHeaderControls();
+    var draftStorageKey = page.dataset.draftStorageKey;
+    var submissionStorageKey = draftStorageKey + ":submission";
+    var draftSaveTimer = null;
+    var discardDraftOnLeave = false;
+    var scalarFieldNames = [
+        "requester_name",
+        "requester_phone",
+        "requester_document",
+        "requester_email",
+        "service_postal_code",
+        "service_address",
+        "service_number",
+        "service_neighborhood",
+        "service_landmark",
+        "notes"
+    ];
+
+    function setDraftStatus(message, state) {
+        draftStatus.textContent = message || "";
+        draftStatus.dataset.state = state || "";
+        draftStatus.hidden = !message;
+    }
+
+    function draftTime(savedAt) {
+        var date = new Date(savedAt);
+        if (Number.isNaN(date.getTime())) return "";
+        return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function readStoredDraft() {
+        try {
+            var stored = localStorage.getItem(draftStorageKey);
+            return stored ? JSON.parse(stored) : null;
+        } catch (error) {
+            setDraftStatus("O rascunho não pôde ser acessado neste navegador.", "error");
+            return null;
+        }
+    }
+
+    function clearStoredDraft() {
+        if (draftSaveTimer) window.clearTimeout(draftSaveTimer);
+        draftSaveTimer = null;
+        try {
+            localStorage.removeItem(draftStorageKey);
+        } catch (error) {
+            setDraftStatus("O rascunho não pôde ser removido neste navegador.", "error");
+            return;
+        }
+        setDraftStatus("", "");
+    }
+
+    function setSubmissionPending(isPending) {
+        try {
+            if (isPending) sessionStorage.setItem(submissionStorageKey, "1");
+            else sessionStorage.removeItem(submissionStorageKey);
+        } catch (error) {
+            // The draft remains safe even when session storage is unavailable.
+        }
+    }
+
+    function submissionWasPending() {
+        try {
+            return sessionStorage.getItem(submissionStorageKey) === "1";
+        } catch (error) {
+            return false;
+        }
+    }
+
     function digitsOnly(value) {
         return value.replace(/\D/g, "");
     }
@@ -208,16 +311,134 @@
         });
     }
 
+    function applyServiceItem(row, item) {
+        var service = row.querySelector("[data-service-select]");
+        var quantity = row.querySelector("[name='quantities']");
+        var unit = row.querySelector("[data-unit-select]");
+
+        service.value = item && item.service ? item.service : "";
+        quantity.value = item && item.quantity ? item.quantity : "1";
+        populateUnits(row);
+        if (item && item.unit && Array.from(unit.options).some(function (option) {
+            return option.value === item.unit;
+        })) {
+            unit.value = item.unit;
+        }
+    }
+
+    function appendServiceItem(item, shouldFocus) {
+        var row = firstRow.cloneNode(true);
+        applyServiceItem(row, item);
+        items.appendChild(row);
+        renumber();
+        if (shouldFocus) row.querySelector("[data-service-select]").focus();
+        return row;
+    }
+
+    function collectDraft() {
+        var fields = {};
+        scalarFieldNames.forEach(function (name) {
+            var field = form.elements.namedItem(name);
+            fields[name] = field ? field.value : "";
+        });
+
+        return {
+            version: 1,
+            savedAt: new Date().toISOString(),
+            fields: fields,
+            services: Array.from(items.querySelectorAll("[data-service-item]")).map(function (row) {
+                return {
+                    service: row.querySelector("[data-service-select]").value,
+                    quantity: row.querySelector("[name='quantities']").value,
+                    unit: row.querySelector("[data-unit-select]").value
+                };
+            })
+        };
+    }
+
+    function draftHasContent(draft) {
+        var hasScalarValue = scalarFieldNames.some(function (name) {
+            return Boolean((draft.fields[name] || "").trim());
+        });
+        var hasServiceValue = draft.services.some(function (item) {
+            return Boolean(item.service || item.unit || (item.quantity && item.quantity !== "1"));
+        });
+        return hasScalarValue || hasServiceValue || draft.services.length > 1;
+    }
+
+    function saveDraft() {
+        if (discardDraftOnLeave) return;
+        var draft = collectDraft();
+        if (!draftHasContent(draft)) {
+            clearStoredDraft();
+            return;
+        }
+
+        try {
+            localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+            setDraftStatus("Rascunho salvo automaticamente às " + draftTime(draft.savedAt) + ".", "saved");
+        } catch (error) {
+            setDraftStatus("O rascunho não pôde ser salvo neste navegador.", "error");
+        }
+    }
+
+    function scheduleDraftSave() {
+        if (draftSaveTimer) window.clearTimeout(draftSaveTimer);
+        draftSaveTimer = window.setTimeout(saveDraft, 250);
+    }
+
+    function restoreDraft(draft) {
+        if (!draft || draft.version !== 1 || !draft.fields || !Array.isArray(draft.services)) return false;
+
+        scalarFieldNames.forEach(function (name) {
+            var field = form.elements.namedItem(name);
+            if (field && typeof draft.fields[name] === "string") field.value = draft.fields[name];
+        });
+
+        Array.from(items.querySelectorAll("[data-service-item]")).slice(1).forEach(function (row) {
+            row.remove();
+        });
+        applyServiceItem(firstRow, draft.services[0]);
+        draft.services.slice(1).forEach(function (item) { appendServiceItem(item, false); });
+        renumber();
+
+        ["[data-mask-phone]", "[data-mask-document]", "[data-mask-cep]"].forEach(function (selector) {
+            var field = page.querySelector(selector);
+            if (field) field.dispatchEvent(new Event("input", { bubbles: false }));
+        });
+
+        setDraftStatus("Rascunho de " + (draftTime(draft.savedAt) || "uma sessão anterior") +
+            " restaurado automaticamente.", "restored");
+        return true;
+    }
+
+    function resetRequestForm() {
+        form.reset();
+        Array.from(items.querySelectorAll("[data-service-item]")).slice(1).forEach(function (row) {
+            row.remove();
+        });
+        applyServiceItem(firstRow, null);
+        renumber();
+
+        lookupVersion += 1;
+        if (lookupController) lookupController.abort();
+        lookupController = null;
+        currentCep = "";
+        autofilledAddress = "";
+        autofilledNeighborhood = "";
+        setCepStatus("Busca automática com 8 dígitos.", "");
+
+        clearStoredDraft();
+        setSubmissionPending(false);
+        setDraftStatus("Formulário limpo. O rascunho também foi removido.", "cleared");
+        form.elements.namedItem("requester_name").focus();
+    }
+
     populateUnits(firstRow);
 
     addButton.addEventListener("click", function () {
-        var row = firstRow.cloneNode(true);
-        row.querySelector("[data-service-select]").value = "";
-        row.querySelector("[name='quantities']").value = "1";
-        populateUnits(row);
-        items.appendChild(row);
-        renumber();
-        row.querySelector("[data-service-select]").focus();
+        appendServiceItem(null, true);
+        scheduleDraftSave();
     });
 
     items.addEventListener("change", function (event) {
@@ -233,6 +454,34 @@
             remove.closest("[data-service-item]").nextElementSibling;
         remove.closest("[data-service-item]").remove();
         renumber();
+        scheduleDraftSave();
         if (nextFocus) nextFocus.querySelector("[data-service-select]").focus();
     });
+
+    var successfulSubmission = submissionWasPending() && Boolean(document.querySelector(".app-toast--success"));
+    setSubmissionPending(false);
+    if (successfulSubmission) clearStoredDraft();
+    else restoreDraft(readStoredDraft());
+
+    form.addEventListener("input", scheduleDraftSave);
+    form.addEventListener("change", scheduleDraftSave);
+    form.addEventListener("submit", function () {
+        saveDraft();
+        setSubmissionPending(true);
+    });
+
+    clearButton.addEventListener("click", function () {
+        if (draftHasContent(collectDraft()) &&
+            !window.confirm("Limpar todos os campos e apagar o rascunho salvo?")) return;
+        resetRequestForm();
+    });
+
+    var discardLink = page.querySelector("[data-draft-discard]");
+    discardLink.addEventListener("click", function () {
+        discardDraftOnLeave = true;
+        clearStoredDraft();
+        setSubmissionPending(false);
+    });
+
+    window.addEventListener("pagehide", saveDraft);
 }());

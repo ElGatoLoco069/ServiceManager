@@ -1,13 +1,62 @@
-from service_request.models import ServiceRequest
+from django.db.models import Prefetch
+from django.utils import timezone
+
+from service_request.models import ServiceRequest, ServiceRequestItem
+
 
 class DashboardService:
 
+    @staticmethod
     def get_context():
+        today = timezone.localdate()
+
+        pending_items = ServiceRequestItem.objects.filter(
+            status=ServiceRequestItem.Status.PENDING,
+        ).order_by("created_at")
+        awaiting_requests = list(
+            ServiceRequest.objects.filter(items__status=ServiceRequestItem.Status.PENDING)
+            .distinct()
+            .prefetch_related(
+                Prefetch("items", queryset=pending_items, to_attr="pending_items"),
+            )
+            .order_by("created_at")
+        )
+
+        today_schedule = list(
+            ServiceRequestItem.objects.filter(
+                scheduled_for__date=today,
+                status__in=(
+                    ServiceRequestItem.Status.SCHEDULED,
+                    ServiceRequestItem.Status.IN_PROGRESS,
+                    ServiceRequestItem.Status.COMPLETED,
+                ),
+            )
+            .select_related("service_request")
+            .order_by("scheduled_for", "created_at")
+        )
+
+        recent_requests = list(
+            ServiceRequest.objects.prefetch_related("items").order_by("-created_at")[:5]
+        )
 
         context = {
-            "awaiting_service_request":ServiceRequest.objects.filter(
-                status=ServiceRequest.Status.REQUESTED
-            ),
+            "generated_at": timezone.localtime(),
+            "new_requests_count": ServiceRequest.objects.filter(
+                created_at__date=today,
+            ).count(),
+            "awaiting_service_request": awaiting_requests,
+            "awaiting_count": len(awaiting_requests),
+            "today_schedule": today_schedule,
+            "scheduled_today_count": len(today_schedule),
+            "in_progress_count": ServiceRequestItem.objects.filter(
+                status=ServiceRequestItem.Status.IN_PROGRESS,
+            ).count(),
+            "completed_today_count": ServiceRequestItem.objects.filter(
+                status=ServiceRequestItem.Status.COMPLETED,
+                updated_at__date=today,
+            ).count(),
+            "recent_requests": recent_requests,
+            "recent_requests_count": len(recent_requests),
         }
 
         return context

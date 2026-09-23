@@ -4,180 +4,224 @@
     var page = document.querySelector("[data-agenda-page]");
     if (!page) return;
 
-    var appointments = [
-        {
-            id: "demo-184-transport-1",
-            protocol: "SRV-2026-000184",
-            requester: "João da Silva",
-            service: "Transporte de terra",
-            quantity: "3",
-            unit: "cargas",
-            location: "Linha São José",
-            date: "2026-09-10",
-            time: "08:00",
-            operators: ["João Emerson", "Carlos Almeida"],
-            status: "scheduled",
-            notes: "Executar inicialmente três cargas e retornar posteriormente para finalizar."
-        },
-        {
-            id: "demo-191-gravel",
-            protocol: "SRV-2026-000191",
-            requester: "Maria Oliveira",
-            service: "Cascalhamento",
-            quantity: "4",
-            unit: "cargas",
-            location: "Estrada Santa Luzia",
-            date: "2026-09-10",
-            time: "13:30",
-            operators: ["Marcos Oliveira"],
-            status: "in-progress",
-            notes: "Serviço iniciado pelo trecho próximo à ponte."
-        },
-        {
-            id: "demo-190-cleaning",
-            protocol: "SRV-2026-000190",
-            requester: "Luciana Alves",
-            service: "Limpeza de terreno",
-            quantity: "1",
-            unit: "serviço",
-            location: "Vila Esperança",
-            date: "2026-09-10",
-            time: "16:30",
-            operators: ["Pedro Santos"],
-            status: "completed",
-            notes: "Área concluída e liberada."
-        },
-        {
-            id: "demo-184-transport-2",
-            protocol: "SRV-2026-000184",
-            requester: "João da Silva",
-            service: "Transporte de terra",
-            quantity: "2",
-            unit: "cargas",
-            location: "Linha São José",
-            date: "2026-09-11",
-            time: "09:00",
-            operators: ["João Emerson"],
-            status: "scheduled",
-            notes: "Finalizar as duas cargas restantes da solicitação."
-        },
-        {
-            id: "demo-184-grading",
-            protocol: "SRV-2026-000184",
-            requester: "João da Silva",
-            service: "Nivelamento de terreno",
-            quantity: "1",
-            unit: "serviço",
-            location: "Linha São José",
-            date: "2026-09-12",
-            time: "08:30",
-            operators: ["João Emerson"],
-            status: "scheduled",
-            notes: "Realizar após a conclusão do transporte de terra."
-        },
-        {
-            id: "demo-195-cleaning-cancelled",
-            protocol: "SRV-2026-000195",
-            requester: "Rafael Martins",
-            service: "Limpeza de terreno",
-            quantity: "1",
-            unit: "serviço",
-            location: "Comunidade Boa Vista",
-            date: "2026-09-14",
-            time: "10:00",
-            operators: ["Carlos Almeida"],
-            status: "cancelled",
-            notes: "Cancelado visualmente por indisponibilidade do local."
-        }
-    ];
-
     var statusLabels = {
-        "scheduled": "Agendado",
+        scheduled: "Agendado",
+        confirmed: "Confirmado",
         "in-progress": "Em execução",
-        "completed": "Concluído",
-        "cancelled": "Cancelado"
+        completed: "Concluído",
+        cancelled: "Cancelado"
     };
-    var monthLabel = page.querySelector("[data-calendar-month]");
-    var daysContainer = page.querySelector("[data-calendar-days]");
-    var mobileAgenda = page.querySelector("[data-mobile-agenda]");
-    var emptyState = page.querySelector("[data-calendar-empty]");
+    var statusAliases = {
+        in_progress: "in-progress",
+        canceled: "cancelled"
+    };
+    var allowedStatuses = Object.keys(statusLabels);
+    var eventSource = page.querySelector("[data-agenda-event-source]");
+    var calendarBoard = page.querySelector("[data-calendar-board]");
+    var calendarGrid = page.querySelector("[data-calendar-grid]");
+    var periodLabel = page.querySelector("[data-calendar-period]");
     var resultCount = page.querySelector("[data-calendar-result-count]");
-    var operatorFilter = page.querySelector("[data-calendar-operator]");
-    var statusFilter = page.querySelector("[data-calendar-status]");
+    var emptyState = page.querySelector("[data-calendar-empty]");
     var searchFilter = page.querySelector("[data-calendar-search]");
+    var serviceFilter = page.querySelector("[data-calendar-service]");
+    var statusFilter = page.querySelector("[data-calendar-status]");
     var resetFilters = page.querySelector("[data-calendar-reset]");
+    var viewButtons = Array.from(page.querySelectorAll("[data-calendar-view-button]"));
+    var pendingViewport = page.querySelector("[data-pending-viewport]");
+    var pendingEmpty = page.querySelector("[data-pending-empty]");
+    var pendingCount = page.querySelector("[data-pending-count]");
+    var scheduleDialog = page.querySelector("[data-schedule-dialog]");
+    var scheduleForm = scheduleDialog.querySelector("[data-schedule-form]");
+    var scheduleItems = scheduleDialog.querySelector("[data-schedule-items]");
+    var scheduleItemsEmpty = scheduleDialog.querySelector("[data-schedule-items-empty]");
+    var scheduleItemCount = scheduleDialog.querySelector("[data-schedule-item-count]");
+    var schedulePayload = scheduleDialog.querySelector("[data-schedule-payload]");
+    var scheduleConfirm = scheduleDialog.querySelector("[data-schedule-confirm]");
+    var schedulePreviewDate = scheduleDialog.querySelector("[data-schedule-preview-date]");
+    var schedulePreviewSelection = scheduleDialog.querySelector("[data-schedule-preview-selection]");
+    var schedulePreviewSelectedTime = scheduleDialog.querySelector("[data-schedule-preview-selected-time]");
+    var schedulePreviewConflict = scheduleDialog.querySelector("[data-schedule-preview-conflict]");
+    var schedulePreviewPrompt = scheduleDialog.querySelector("[data-schedule-preview-prompt]");
+    var schedulePreviewClear = scheduleDialog.querySelector("[data-schedule-preview-clear]");
+    var schedulePreviewList = scheduleDialog.querySelector("[data-schedule-preview-list]");
     var detailsDialog = page.querySelector("[data-appointment-dialog]");
-    var detailsStatus = detailsDialog.querySelector("[data-appointment-status]");
-    var toast = page.querySelector("[data-agenda-toast]");
-    var toastTimer = null;
+    var scheduleOpener = null;
     var detailsOpener = null;
-    var detailsBackdropPressed = false;
-    var today = new Date();
-    var visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    var view = "month";
+    var today = parseIsoDate(page.dataset.agendaToday) || startOfDay(new Date());
+    var visibleDate = new Date(today);
 
-    function localIsoDate(date) {
-        var year = date.getFullYear();
-        var month = String(date.getMonth() + 1).padStart(2, "0");
-        var day = String(date.getDate()).padStart(2, "0");
-        return year + "-" + month + "-" + day;
+    function startOfDay(date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
     }
 
-    function dateFromIso(value) {
+    function parseIsoDate(value) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return null;
         var parts = value.split("-").map(Number);
-        return new Date(parts[0], parts[1] - 1, parts[2]);
+        var date = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (date.getFullYear() !== parts[0] || date.getMonth() !== parts[1] - 1 || date.getDate() !== parts[2]) {
+            return null;
+        }
+        return date;
     }
 
-    function normalizeText(value) {
-        return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            .toLocaleLowerCase("pt-BR").trim().replace(/\s+/g, " ");
+    function isoDate(date) {
+        return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0")
+        ].join("-");
+    }
+
+    function addDays(date, amount) {
+        var result = new Date(date);
+        result.setDate(result.getDate() + amount);
+        return result;
+    }
+
+    function startOfWeek(date) {
+        return addDays(startOfDay(date), -date.getDay());
     }
 
     function capitalize(value) {
         return value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
     }
 
-    function monthName(date) {
-        return capitalize(new Intl.DateTimeFormat("pt-BR", {
-            month: "long",
-            year: "numeric"
-        }).format(date));
+    function normalizeText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLocaleLowerCase("pt-BR")
+            .trim()
+            .replace(/\s+/g, " ");
     }
 
-    function fullDate(date) {
-        return capitalize(new Intl.DateTimeFormat("pt-BR", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-        }).format(date));
+    function formatDate(date, options) {
+        return new Intl.DateTimeFormat("pt-BR", options).format(date);
     }
 
-    function shortDate(date) {
-        return new Intl.DateTimeFormat("pt-BR").format(date);
+    function readEventsFromDom() {
+        return Array.from(eventSource.querySelectorAll("[data-agenda-event]"))
+            .map(function (element, index) {
+                var date = parseIsoDate(element.dataset.date);
+                if (!date) return null;
+                var rawStatus = statusAliases[element.dataset.status] || element.dataset.status;
+                var status = allowedStatuses.includes(rawStatus)
+                    ? rawStatus
+                    : "scheduled";
+                var quantity = element.dataset.quantity || "";
+                var unit = element.dataset.unit || "";
+                var services = element.dataset.services || element.dataset.service || "";
+                return {
+                    id: element.dataset.id || "agenda-event-" + (index + 1),
+                    protocol: element.dataset.protocol || "",
+                    requester: element.dataset.requester || "",
+                    phone: element.dataset.phone || "",
+                    service: element.dataset.service || services,
+                    services: services,
+                    quantity: quantity,
+                    unit: unit,
+                    quantityLabel: [quantity, unit].filter(Boolean).join(" "),
+                    location: element.dataset.location || "",
+                    date: isoDate(date),
+                    time: element.dataset.time || "",
+                    status: status,
+                    notes: element.dataset.notes || ""
+                };
+            })
+            .filter(Boolean);
+    }
+
+    var appointments = readEventsFromDom();
+    var appointmentsById = new Map(appointments.map(function (appointment) {
+        return [appointment.id, appointment];
+    }));
+
+    function updatePendingState() {
+        var cards = page.querySelectorAll("[data-pending-request-card]");
+        var amount = cards.length;
+        pendingCount.textContent = amount + (amount === 1 ? " solicitação" : " solicitações");
+        pendingViewport.hidden = amount === 0;
+        pendingEmpty.hidden = amount !== 0;
+    }
+
+    function populateServiceFilter() {
+        var currentValue = serviceFilter.value;
+        var renderedServices = Array.from(serviceFilter.options).map(function (option) {
+            return option.value === "all" ? "" : option.value;
+        });
+        var eventServices = appointments.map(function (item) { return item.service; });
+        var services = Array.from(new Set(renderedServices.concat(eventServices).filter(Boolean))).sort(function (first, second) {
+            return first.localeCompare(second, "pt-BR");
+        });
+
+        serviceFilter.replaceChildren();
+        var allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = "Todos os serviços";
+        serviceFilter.appendChild(allOption);
+        services.forEach(function (service) {
+            var option = document.createElement("option");
+            option.value = service;
+            option.textContent = service;
+            serviceFilter.appendChild(option);
+        });
+        serviceFilter.value = services.includes(currentValue) ? currentValue : "all";
     }
 
     function matchesFilters(appointment) {
         var query = normalizeText(searchFilter.value);
         var searchable = normalizeText([
             appointment.protocol,
-            appointment.service,
-            appointment.requester,
-            appointment.location
+            appointment.requester
         ].join(" "));
-        var matchesSearch = !query || searchable.includes(query);
-        var matchesStatus = statusFilter.value === "all" || appointment.status === statusFilter.value;
-        var matchesOperator = operatorFilter.value === "all" || appointment.operators.includes(operatorFilter.value);
-        return matchesSearch && matchesStatus && matchesOperator;
+        return (!query || searchable.includes(query)) &&
+            (serviceFilter.value === "all" || appointment.service === serviceFilter.value) &&
+            (statusFilter.value === "all" || appointment.status === statusFilter.value);
     }
 
-    function appointmentsForVisibleMonth() {
+    function isInVisiblePeriod(appointment) {
+        var date = parseIsoDate(appointment.date);
+        if (view === "month") {
+            return date.getFullYear() === visibleDate.getFullYear() &&
+                date.getMonth() === visibleDate.getMonth();
+        }
+        if (view === "week") {
+            var firstDay = startOfWeek(visibleDate);
+            var lastDay = addDays(firstDay, 6);
+            return date >= firstDay && date <= lastDay;
+        }
+        return appointment.date === isoDate(visibleDate);
+    }
+
+    function visibleAppointments() {
         return appointments.filter(function (appointment) {
-            var date = dateFromIso(appointment.date);
-            return date.getFullYear() === visibleMonth.getFullYear() &&
-                date.getMonth() === visibleMonth.getMonth() && matchesFilters(appointment);
+            return isInVisiblePeriod(appointment) && matchesFilters(appointment);
         }).sort(function (first, second) {
-            return (first.date + first.time).localeCompare(second.date + second.time);
+            return (first.date + "T" + first.time).localeCompare(second.date + "T" + second.time);
         });
+    }
+
+    function periodTitle() {
+        if (view === "month") {
+            return capitalize(formatDate(visibleDate, { month: "long", year: "numeric" }));
+        }
+        if (view === "week") {
+            var firstDay = startOfWeek(visibleDate);
+            var lastDay = addDays(firstDay, 6);
+            var sameMonth = firstDay.getMonth() === lastDay.getMonth();
+            var startLabel = sameMonth
+                ? formatDate(firstDay, { day: "2-digit" })
+                : formatDate(firstDay, { day: "2-digit", month: "short" });
+            var endLabel = formatDate(lastDay, { day: "2-digit", month: "short", year: "numeric" });
+            return capitalize(startLabel + " – " + endLabel);
+        }
+        return capitalize(formatDate(visibleDate, {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        }));
     }
 
     function createCalendarEvent(appointment) {
@@ -186,257 +230,548 @@
         button.className = "calendar-event calendar-event--" + appointment.status;
         button.dataset.appointmentId = appointment.id;
         button.setAttribute("aria-haspopup", "dialog");
-        button.setAttribute("aria-controls", "appointment-dialog");
-        button.setAttribute("aria-label", appointment.time + ", " + appointment.service + ", " + appointment.protocol + ", " + statusLabels[appointment.status]);
+        button.setAttribute("aria-controls", "appointment-details-dialog");
+        button.setAttribute("aria-label", [
+            appointment.time,
+            appointment.service,
+            appointment.requester,
+            statusLabels[appointment.status]
+        ].filter(Boolean).join(", "));
 
+        var headline = document.createElement("span");
+        headline.className = "calendar-event__headline";
         var time = document.createElement("time");
-        time.dateTime = appointment.date + "T" + appointment.time;
-        time.textContent = appointment.time;
+        time.dateTime = appointment.date + (appointment.time ? "T" + appointment.time : "");
+        time.textContent = appointment.time || "--:--";
         var service = document.createElement("strong");
-        service.textContent = appointment.service;
-        var protocol = document.createElement("span");
-        protocol.textContent = appointment.protocol;
-        button.append(time, service, protocol);
+        service.textContent = appointment.service || "Serviço";
+        headline.append(time, service);
+
+        var requester = document.createElement("span");
+        requester.className = "calendar-event__requester";
+        requester.textContent = appointment.requester || "Solicitante não informado";
+        var quantity = document.createElement("span");
+        quantity.className = "calendar-event__quantity";
+        quantity.textContent = appointment.quantityLabel || appointment.protocol || "";
+        button.append(headline, requester, quantity);
         return button;
     }
 
-    function renderCalendarGrid(filtered) {
-        daysContainer.replaceChildren();
-        var year = visibleMonth.getFullYear();
-        var month = visibleMonth.getMonth();
-        var firstDayOffset = new Date(year, month, 1).getDay();
-        var firstVisibleDate = new Date(year, month, 1 - firstDayOffset);
-        var eventsByDate = filtered.reduce(function (groups, appointment) {
-            (groups[appointment.date] = groups[appointment.date] || []).push(appointment);
-            return groups;
-        }, {});
+    function createDayCell(date, events, outsideMonth) {
+        var cell = document.createElement("section");
+        var isToday = isoDate(date) === isoDate(today);
+        cell.className = "calendar-day" +
+            (outsideMonth ? " is-outside" : "") +
+            (isToday ? " is-today" : "");
+        cell.setAttribute("role", "gridcell");
+        cell.setAttribute("aria-label", formatDate(date, {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        }));
 
-        for (var index = 0; index < 42; index += 1) {
-            var date = new Date(firstVisibleDate);
-            date.setDate(firstVisibleDate.getDate() + index);
-            var isoDate = localIsoDate(date);
-            var inCurrentMonth = date.getMonth() === month;
-            var cell = document.createElement("div");
-            cell.className = "calendar-day" + (inCurrentMonth ? "" : " is-outside") +
-                (isoDate === localIsoDate(today) ? " is-today" : "");
-            cell.setAttribute("role", "gridcell");
-            cell.setAttribute("aria-label", fullDate(date));
+        var heading = document.createElement("header");
+        heading.className = "calendar-day__heading";
+        var dayName = document.createElement("span");
+        dayName.className = "calendar-day__name";
+        dayName.textContent = view === "month"
+            ? ""
+            : capitalize(formatDate(date, { weekday: view === "day" ? "long" : "short" }));
+        var dayNumber = document.createElement("time");
+        dayNumber.className = "calendar-day__number";
+        dayNumber.dateTime = isoDate(date);
+        dayNumber.textContent = date.getDate();
+        heading.append(dayName, dayNumber);
 
-            var number = document.createElement("time");
-            number.className = "calendar-day__number";
-            number.dateTime = isoDate;
-            number.textContent = date.getDate();
-            cell.appendChild(number);
-
-            var events = document.createElement("div");
-            events.className = "calendar-day__events";
-            if (inCurrentMonth && eventsByDate[isoDate]) {
-                eventsByDate[isoDate].forEach(function (appointment) {
-                    events.appendChild(createCalendarEvent(appointment));
-                });
-            }
-            cell.appendChild(events);
-            daysContainer.appendChild(cell);
+        var eventList = document.createElement("div");
+        eventList.className = "calendar-day__events";
+        var visibleEvents = view === "month" ? events.slice(0, 3) : events;
+        visibleEvents.forEach(function (appointment) {
+            eventList.appendChild(createCalendarEvent(appointment));
+        });
+        if (events.length > visibleEvents.length) {
+            var more = document.createElement("span");
+            more.className = "calendar-more";
+            more.textContent = "+" + (events.length - visibleEvents.length) + " serviço" +
+                (events.length - visibleEvents.length === 1 ? "" : "s");
+            eventList.appendChild(more);
         }
+
+        cell.append(heading, eventList);
+        return cell;
     }
 
-    function createMobileAppointment(appointment) {
-        var button = document.createElement("button");
-        button.type = "button";
-        button.className = "mobile-appointment mobile-appointment--" + appointment.status;
-        button.dataset.appointmentId = appointment.id;
-        button.setAttribute("aria-haspopup", "dialog");
-        button.setAttribute("aria-controls", "appointment-dialog");
-
-        var time = document.createElement("time");
-        time.dateTime = appointment.date + "T" + appointment.time;
-        time.textContent = appointment.time;
-        var copy = document.createElement("span");
-        copy.className = "mobile-appointment__copy";
-        var service = document.createElement("strong");
-        service.textContent = appointment.service;
-        var meta = document.createElement("span");
-        meta.textContent = appointment.protocol + " · " + statusLabels[appointment.status];
-        copy.append(service, meta);
-        var chevron = document.createElement("i");
-        chevron.className = "fa-solid fa-chevron-right";
-        chevron.setAttribute("aria-hidden", "true");
-        button.append(time, copy, chevron);
-        return button;
+    function datesForView() {
+        if (view === "month") {
+            var firstOfMonth = new Date(visibleDate.getFullYear(), visibleDate.getMonth(), 1);
+            var firstGridDate = addDays(firstOfMonth, -firstOfMonth.getDay());
+            return Array.from({ length: 42 }, function (_, index) {
+                return addDays(firstGridDate, index);
+            });
+        }
+        if (view === "week") {
+            var firstOfWeek = startOfWeek(visibleDate);
+            return Array.from({ length: 7 }, function (_, index) {
+                return addDays(firstOfWeek, index);
+            });
+        }
+        return [startOfDay(visibleDate)];
     }
 
-    function renderMobileAgenda(filtered) {
-        mobileAgenda.replaceChildren();
-        var groups = filtered.reduce(function (result, appointment) {
+    function renderCalendar() {
+        var filtered = visibleAppointments();
+        var grouped = filtered.reduce(function (result, appointment) {
             (result[appointment.date] = result[appointment.date] || []).push(appointment);
             return result;
         }, {});
 
-        Object.keys(groups).sort().forEach(function (dateKey) {
-            var section = document.createElement("section");
-            section.className = "mobile-agenda__day";
-            var heading = document.createElement("header");
-            heading.className = "mobile-agenda__heading";
-            var dateLabel = document.createElement("strong");
-            dateLabel.textContent = fullDate(dateFromIso(dateKey));
-            var count = document.createElement("span");
-            count.textContent = groups[dateKey].length + (groups[dateKey].length === 1 ? " serviço" : " serviços");
-            heading.append(dateLabel, count);
-            var items = document.createElement("div");
-            items.className = "mobile-agenda__items";
-            groups[dateKey].forEach(function (appointment) {
-                items.appendChild(createMobileAppointment(appointment));
-            });
-            section.append(heading, items);
-            mobileAgenda.appendChild(section);
-        });
-    }
-
-    function renderCalendar() {
-        var filtered = appointmentsForVisibleMonth();
-        monthLabel.textContent = monthName(visibleMonth);
-        resultCount.textContent = filtered.length + (filtered.length === 1 ? " serviço" : " serviços");
+        periodLabel.textContent = periodTitle();
+        resultCount.textContent = filtered.length + (filtered.length === 1
+            ? " serviço neste período"
+            : " serviços neste período");
         emptyState.hidden = filtered.length !== 0;
-        renderCalendarGrid(filtered);
-        renderMobileAgenda(filtered);
-        resetFilters.disabled = operatorFilter.value === "all" && statusFilter.value === "all" && !searchFilter.value;
+        calendarBoard.dataset.calendarView = view;
+        calendarGrid.replaceChildren();
+
+        datesForView().forEach(function (date) {
+            var outsideMonth = view === "month" && date.getMonth() !== visibleDate.getMonth();
+            var events = outsideMonth ? [] : (grouped[isoDate(date)] || []);
+            calendarGrid.appendChild(createDayCell(date, events, outsideMonth));
+        });
+
+        viewButtons.forEach(function (button) {
+            button.setAttribute("aria-pressed", String(button.dataset.calendarViewButton === view));
+        });
+        resetFilters.disabled = !searchFilter.value &&
+            serviceFilter.value === "all" &&
+            statusFilter.value === "all";
     }
 
-    function updateIndicators() {
-        var todayIso = localIsoDate(today);
-        var pendingCount = page.querySelectorAll("[data-pending-item]").length;
-        var counts = {
-            "pending": pendingCount,
-            "scheduled-today": appointments.filter(function (item) {
-                return item.date === todayIso && item.status === "scheduled";
-            }).length,
-            "in-progress": appointments.filter(function (item) { return item.status === "in-progress"; }).length,
-            "completed-today": appointments.filter(function (item) {
-                return item.date === todayIso && item.status === "completed";
-            }).length
-        };
-        Object.keys(counts).forEach(function (name) {
-            page.querySelector('[data-agenda-count="' + name + '"]').textContent = counts[name];
+    function navigatePeriod(direction) {
+        if (view === "month") {
+            visibleDate = new Date(visibleDate.getFullYear(), visibleDate.getMonth() + direction, 1);
+        } else if (view === "week") {
+            visibleDate = addDays(visibleDate, direction * 7);
+        } else {
+            visibleDate = addDays(visibleDate, direction);
+        }
+        renderCalendar();
+    }
+
+    function showDialog(dialog, title) {
+        if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute("open", "");
+        }
+        window.setTimeout(function () {
+            title.focus();
+        }, 0);
+    }
+
+    function closeDialog(dialog) {
+        if (typeof dialog.close === "function") {
+            dialog.close();
+        } else {
+            dialog.removeAttribute("open");
+            dialog.dispatchEvent(new Event("close"));
+        }
+    }
+
+    function valueFromCard(button, name) {
+        var card = button.closest("[data-pending-request-card]");
+        var directValue = button.dataset[name];
+        if (directValue) return directValue;
+        if (card && card.dataset[name]) return card.dataset[name];
+        if (card) {
+            var field = card.querySelector('[data-pending-field="' + name + '"]');
+            if (field) return field.textContent.trim();
+        }
+        return "";
+    }
+
+    function scheduleServicesFromCard(button) {
+        var card = button.closest("[data-pending-request-card]");
+        if (!card) return [];
+        return Array.from(card.querySelectorAll("[data-pending-service-item]")).map(function (item) {
+            return {
+                itemId: item.dataset.itemId || "",
+                name: item.dataset.serviceName || "Serviço não informado",
+                quantityLabel: item.dataset.quantityLabel || "Quantidade não informada",
+                scheduledDate: item.dataset.scheduledDate || "",
+                scheduledTime: item.dataset.scheduledTime || "",
+                status: item.dataset.status || "pending"
+            };
         });
-        page.querySelector("[data-pending-label]").textContent = pendingCount + (pendingCount === 1 ? " item" : " itens");
-        page.querySelector("[data-pending-list]").hidden = pendingCount === 0;
-        page.querySelector("[data-pending-empty]").hidden = pendingCount !== 0;
+    }
+
+    function createScheduleField(labelText, type, id, value) {
+        var field = document.createElement("div");
+        field.className = "agenda-dialog__field";
+        var label = document.createElement("label");
+        label.htmlFor = id;
+        label.textContent = labelText;
+        var input = document.createElement("input");
+        input.id = id;
+        input.type = type;
+        input.dataset.scheduleField = type;
+        input.value = value || "";
+        if (type === "date") {
+            var todayValue = isoDate(today);
+            input.min = input.value && input.value < todayValue ? input.value : todayValue;
+        }
+        input.addEventListener("input", function () {
+            var service = input.closest("[data-schedule-service]");
+            if (service) {
+                updateScheduleServiceStatus(service);
+                renderDaySchedulePreview(service);
+            }
+        });
+        input.addEventListener("focus", function () {
+            var service = input.closest("[data-schedule-service]");
+            if (service) renderDaySchedulePreview(service);
+        });
+        field.append(label, input);
+        return field;
+    }
+
+    function updateScheduleServiceStatus(service) {
+        var dateInput = service.querySelector('[data-schedule-field="date"]');
+        var timeInput = service.querySelector('[data-schedule-field="time"]');
+        var badge = service.querySelector("[data-schedule-service-status]");
+        var cancelled = service.classList.contains("is-cancelled");
+
+        dateInput.required = !cancelled && Boolean(timeInput.value);
+        timeInput.required = !cancelled && Boolean(dateInput.value);
+
+        if (cancelled) {
+            service.dataset.status = "canceled";
+            badge.className = "status-badge status-badge--cancelled";
+            badge.textContent = "Cancelado";
+            return;
+        }
+
+        var scheduled = Boolean(dateInput.value && timeInput.value);
+        service.dataset.status = scheduled ? "scheduled" : "pending";
+        badge.className = "status-badge status-badge--" + (scheduled ? "scheduled" : "waiting");
+        badge.textContent = scheduled ? "Agendado" : "A programar";
+    }
+
+    function setScheduleServiceCancelled(button, cancelled) {
+        var service = button.closest("[data-schedule-service]");
+        if (!service) return;
+        var icon = button.querySelector("i");
+        var label = button.querySelector("span");
+        service.classList.toggle("is-cancelled", cancelled);
+        service.querySelectorAll("input").forEach(function (input) {
+            input.disabled = cancelled;
+        });
+        button.setAttribute("aria-pressed", String(cancelled));
+        button.setAttribute("aria-label", cancelled ? "Reativar item" : "Cancelar item");
+        icon.className = cancelled ? "fa-solid fa-rotate-left" : "fa-solid fa-ban";
+        label.textContent = cancelled ? "Reativar item" : "Cancelar item";
+        updateScheduleServiceStatus(service);
+    }
+
+    function createScheduleService(item, index) {
+        var service = document.createElement("article");
+        service.className = "schedule-service";
+        service.dataset.scheduleService = "";
+        service.dataset.itemId = item.itemId;
+        service.dataset.status = item.status;
+
+        var header = document.createElement("header");
+        header.className = "schedule-service__header";
+        var description = document.createElement("div");
+        var name = document.createElement("strong");
+        name.textContent = item.name;
+        var quantity = document.createElement("span");
+        quantity.textContent = item.quantityLabel;
+        description.append(name, quantity);
+        var badge = document.createElement("span");
+        badge.className = "status-badge status-badge--waiting";
+        badge.dataset.scheduleServiceStatus = "";
+        badge.textContent = "A programar";
+        header.append(description, badge);
+
+        var controls = document.createElement("div");
+        controls.className = "schedule-service__controls";
+        controls.append(
+            createScheduleField("Data", "date", "schedule-item-date-" + index, item.scheduledDate),
+            createScheduleField("Horário", "time", "schedule-item-time-" + index, item.scheduledTime)
+        );
+        var cancelButton = document.createElement("button");
+        cancelButton.type = "button";
+        cancelButton.className = "schedule-service__cancel";
+        cancelButton.dataset.scheduleItemCancel = "";
+        cancelButton.setAttribute("aria-pressed", "false");
+        cancelButton.setAttribute("aria-label", "Cancelar item");
+        var cancelIcon = document.createElement("i");
+        cancelIcon.className = "fa-solid fa-ban";
+        cancelIcon.setAttribute("aria-hidden", "true");
+        var cancelLabel = document.createElement("span");
+        cancelLabel.textContent = "Cancelar item";
+        cancelButton.append(cancelIcon, cancelLabel);
+        controls.appendChild(cancelButton);
+
+        service.append(header, controls);
+        if ((statusAliases[item.status] || item.status) === "cancelled") {
+            setScheduleServiceCancelled(cancelButton, true);
+        } else {
+            updateScheduleServiceStatus(service);
+        }
+        return service;
+    }
+
+    function createSchedulePreviewItem(appointment, conflicting) {
+        var item = document.createElement("li");
+        item.className = "schedule-preview__item" + (conflicting ? " is-conflicting" : "");
+
+        var time = document.createElement("time");
+        time.dateTime = appointment.date + "T" + appointment.time;
+        time.className = "schedule-preview__time";
+        time.textContent = appointment.time || "Horário não informado";
+
+        var service = document.createElement("span");
+        service.className = "schedule-preview__service";
+        service.textContent = appointment.service || "Serviço";
+
+        var badge = document.createElement("span");
+        badge.className = "status-badge status-badge--" + (conflicting ? "conflict" : appointment.status);
+        badge.textContent = conflicting ? "Conflito" : statusLabels[appointment.status];
+
+        item.append(time, service, badge);
+        return item;
+    }
+
+    function renderDaySchedulePreview(service) {
+        scheduleItems.querySelectorAll("[data-schedule-service]").forEach(function (item) {
+            item.classList.toggle("is-preview-active", item === service);
+        });
+
+        var dateInput = service && service.querySelector('[data-schedule-field="date"]');
+        var timeInput = service && service.querySelector('[data-schedule-field="time"]');
+        var selectedDate = dateInput && !dateInput.disabled ? dateInput.value : "";
+        var selectedTime = timeInput && !timeInput.disabled ? timeInput.value : "";
+        var parsedDate = parseIsoDate(selectedDate);
+
+        schedulePreviewSelection.hidden = !selectedTime;
+        schedulePreviewSelectedTime.textContent = selectedTime || "--:--";
+        schedulePreviewConflict.hidden = true;
+        schedulePreviewList.replaceChildren();
+
+        if (!parsedDate) {
+            schedulePreviewDate.textContent = "Selecione uma data";
+            schedulePreviewDate.removeAttribute("datetime");
+            schedulePreviewPrompt.hidden = false;
+            schedulePreviewClear.hidden = true;
+            schedulePreviewList.hidden = true;
+            return;
+        }
+
+        schedulePreviewDate.dateTime = selectedDate;
+        schedulePreviewDate.textContent = formatDate(parsedDate, {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        });
+
+        var currentItemId = service ? service.dataset.itemId : "";
+        var dayAppointments = appointments.filter(function (appointment) {
+            return appointment.date === selectedDate &&
+                appointment.status !== "cancelled" &&
+                appointment.id !== currentItemId;
+        }).sort(function (first, second) {
+            return first.time.localeCompare(second.time);
+        });
+
+        schedulePreviewPrompt.hidden = true;
+        schedulePreviewClear.hidden = dayAppointments.length !== 0;
+        schedulePreviewList.hidden = dayAppointments.length === 0;
+
+        var hasConflict = false;
+        dayAppointments.forEach(function (appointment) {
+            var conflicting = Boolean(selectedTime && appointment.time === selectedTime);
+            hasConflict = hasConflict || conflicting;
+            schedulePreviewList.appendChild(createSchedulePreviewItem(appointment, conflicting));
+        });
+        schedulePreviewConflict.hidden = !hasConflict;
+    }
+
+    function renderScheduleServices(button) {
+        var services = scheduleServicesFromCard(button);
+        scheduleItems.replaceChildren();
+        scheduleItemCount.textContent = services.length + (services.length === 1 ? " item" : " itens");
+        scheduleItemsEmpty.hidden = services.length !== 0;
+        scheduleConfirm.disabled = services.length === 0;
+        services.forEach(function (item, index) {
+            scheduleItems.appendChild(createScheduleService(item, index + 1));
+        });
+        renderDaySchedulePreview(scheduleItems.querySelector("[data-schedule-service]"));
+    }
+
+    function buildSchedulePayload() {
+        return Array.from(scheduleItems.querySelectorAll("[data-schedule-service]")).map(function (service) {
+            var status = service.dataset.status || "pending";
+            var dateInput = service.querySelector('[data-schedule-field="date"]');
+            var timeInput = service.querySelector('[data-schedule-field="time"]');
+            var scheduled = status === "scheduled";
+            return [
+                service.dataset.itemId || "",
+                scheduled ? dateInput.value : null,
+                scheduled ? timeInput.value : null,
+                status
+            ];
+        });
+    }
+
+    function scheduleAction(requestId) {
+        var itemIds = Array.from(scheduleItems.querySelectorAll("[data-schedule-service]"), function (service) {
+            return service.dataset.itemId;
+        }).filter(Boolean);
+        return scheduleForm.dataset.scheduleActionTemplate
+            .replace("REQUEST_ID", encodeURIComponent(requestId))
+            .replace("ITEM_IDS", encodeURIComponent(itemIds.join(",") || "none"));
+    }
+
+    function openScheduleDialog(button) {
+        scheduleOpener = button;
+        ["protocol", "requester"].forEach(function (name) {
+            scheduleDialog.querySelector('[data-schedule-detail="' + name + '"]').textContent =
+                valueFromCard(button, name) || "Não informado";
+        });
+        renderScheduleServices(button);
+        scheduleForm.action = scheduleAction(valueFromCard(button, "requestId"));
+        showDialog(scheduleDialog, scheduleDialog.querySelector("#schedule-dialog-title"));
     }
 
     function openDetails(button) {
-        var appointment = appointments.find(function (item) {
-            return item.id === button.dataset.appointmentId;
-        });
+        var appointment = appointmentsById.get(button.dataset.appointmentId);
         if (!appointment) return;
-
         detailsOpener = button;
-        var details = {
+        var values = {
             protocol: appointment.protocol,
             requester: appointment.requester,
-            service: appointment.service,
-            quantityLabel: appointment.quantity + " " + appointment.unit,
-            unit: appointment.unit,
-            location: appointment.location,
-            dateLabel: shortDate(dateFromIso(appointment.date)),
+            phone: appointment.phone,
+            dateLabel: formatDate(parseIsoDate(appointment.date)),
             time: appointment.time,
-            operatorsLabel: appointment.operators.join(", "),
+            location: appointment.location,
+            services: (appointment.services || appointment.service) +
+                (appointment.quantityLabel ? " — Quantidade: " + appointment.quantityLabel : ""),
             notes: appointment.notes
         };
-        Object.keys(details).forEach(function (name) {
-            detailsDialog.querySelector('[data-appointment-detail="' + name + '"]').textContent = details[name];
+        Object.keys(values).forEach(function (name) {
+            detailsDialog.querySelector('[data-appointment-detail="' + name + '"]').textContent =
+                values[name] || "Não informado";
         });
-        detailsStatus.className = "status-pill status-pill--" + appointment.status;
-        detailsStatus.textContent = statusLabels[appointment.status];
-        if (typeof detailsDialog.showModal === "function") detailsDialog.showModal();
-        else detailsDialog.setAttribute("open", "");
-        window.setTimeout(function () { page.querySelector("#appointment-dialog-title").focus(); }, 0);
+        var badge = detailsDialog.querySelector("[data-appointment-status]");
+        badge.className = "status-badge status-badge--" + appointment.status;
+        badge.textContent = statusLabels[appointment.status];
+        showDialog(detailsDialog, detailsDialog.querySelector("#appointment-dialog-title"));
+    }
+
+    function setupDialog(dialog, closeSelector, onClose) {
+        var backdropPressed = false;
+        dialog.querySelectorAll(closeSelector).forEach(function (button) {
+            button.addEventListener("click", function () {
+                closeDialog(dialog);
+            });
+        });
+        dialog.addEventListener("pointerdown", function (event) {
+            if (event.target !== dialog) {
+                backdropPressed = false;
+                return;
+            }
+            var bounds = dialog.getBoundingClientRect();
+            backdropPressed = event.clientX < bounds.left || event.clientX > bounds.right ||
+                event.clientY < bounds.top || event.clientY > bounds.bottom;
+        });
+        dialog.addEventListener("pointercancel", function () {
+            backdropPressed = false;
+        });
+        dialog.addEventListener("click", function (event) {
+            if (backdropPressed && event.target === dialog) closeDialog(dialog);
+            backdropPressed = false;
+        });
+        dialog.addEventListener("close", onClose);
     }
 
     page.addEventListener("click", function (event) {
+        var cancelItemButton = event.target.closest("[data-schedule-item-cancel]");
+        if (cancelItemButton) {
+            var scheduleService = cancelItemButton.closest("[data-schedule-service]");
+            setScheduleServiceCancelled(
+                cancelItemButton,
+                cancelItemButton.getAttribute("aria-pressed") !== "true"
+            );
+            renderDaySchedulePreview(scheduleService);
+            return;
+        }
+        var scheduleButton = event.target.closest("[data-schedule-open]");
+        if (scheduleButton) {
+            openScheduleDialog(scheduleButton);
+            return;
+        }
         var appointmentButton = event.target.closest("[data-appointment-id]");
         if (appointmentButton) openDetails(appointmentButton);
     });
 
-    detailsDialog.querySelectorAll("[data-appointment-close]").forEach(function (button) {
-        button.addEventListener("click", function () { detailsDialog.close(); });
+    scheduleForm.addEventListener("submit", function (event) {
+        var items = buildSchedulePayload();
+        if (!items.length) {
+            event.preventDefault();
+            return;
+        }
+        schedulePayload.value = JSON.stringify(items);
     });
 
-    function isDetailsBackdrop(event) {
-        if (event.target !== detailsDialog) return false;
-        var bounds = detailsDialog.getBoundingClientRect();
-        return event.clientX < bounds.left || event.clientX > bounds.right ||
-            event.clientY < bounds.top || event.clientY > bounds.bottom;
-    }
+    setupDialog(scheduleDialog, "[data-schedule-close]", function () {
+        scheduleForm.reset();
+        scheduleItems.replaceChildren();
+        scheduleItemCount.textContent = "0 itens";
+        scheduleItemsEmpty.hidden = true;
+        scheduleConfirm.disabled = true;
+        renderDaySchedulePreview(null);
+        if (scheduleOpener && scheduleOpener.isConnected) scheduleOpener.focus();
+        scheduleOpener = null;
+    });
 
-    detailsDialog.addEventListener("pointerdown", function (event) {
-        detailsBackdropPressed = isDetailsBackdrop(event);
-    });
-    detailsDialog.addEventListener("pointercancel", function () { detailsBackdropPressed = false; });
-    detailsDialog.addEventListener("click", function (event) {
-        if (detailsBackdropPressed && isDetailsBackdrop(event)) detailsDialog.close();
-        detailsBackdropPressed = false;
-    });
-    detailsDialog.addEventListener("close", function () {
-        detailsBackdropPressed = false;
+    setupDialog(detailsDialog, "[data-appointment-close]", function () {
         if (detailsOpener && detailsOpener.isConnected) detailsOpener.focus();
         detailsOpener = null;
     });
 
-    function showSuccess(message) {
-        window.clearTimeout(toastTimer);
-        page.querySelector("[data-agenda-toast-message]").textContent = message;
-        toast.hidden = false;
-        toastTimer = window.setTimeout(function () { toast.hidden = true; }, 5000);
-    }
-
-    page.querySelector("[data-agenda-toast-close]").addEventListener("click", function () {
-        window.clearTimeout(toastTimer);
-        toast.hidden = true;
-    });
-
-    document.addEventListener("service-request:confirmed", function (event) {
-        appointments.push(event.detail);
-        var pendingItem = Array.from(page.querySelectorAll("[data-pending-item]")).find(function (item) {
-            return item.dataset.pendingItemId === event.detail.sourceId;
-        });
-        if (pendingItem) pendingItem.remove();
-
-        operatorFilter.value = "all";
-        statusFilter.value = "all";
-        searchFilter.value = "";
-        var scheduledDate = dateFromIso(event.detail.date);
-        visibleMonth = new Date(scheduledDate.getFullYear(), scheduledDate.getMonth(), 1);
-        updateIndicators();
-        renderCalendar();
-        showSuccess("Serviço agendado com sucesso.");
-    });
-
     page.querySelector("[data-calendar-previous]").addEventListener("click", function () {
-        visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
-        renderCalendar();
+        navigatePeriod(-1);
     });
     page.querySelector("[data-calendar-next]").addEventListener("click", function () {
-        visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
-        renderCalendar();
+        navigatePeriod(1);
     });
     page.querySelector("[data-calendar-today]").addEventListener("click", function () {
-        today = new Date();
-        visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        today = startOfDay(new Date());
+        visibleDate = new Date(today);
         renderCalendar();
     });
-
-    [operatorFilter, statusFilter].forEach(function (filter) {
+    viewButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            view = button.dataset.calendarViewButton;
+            renderCalendar();
+        });
+    });
+    [serviceFilter, statusFilter].forEach(function (filter) {
         filter.addEventListener("change", renderCalendar);
     });
     searchFilter.addEventListener("input", renderCalendar);
     resetFilters.addEventListener("click", function () {
-        operatorFilter.value = "all";
-        statusFilter.value = "all";
         searchFilter.value = "";
+        serviceFilter.value = "all";
+        statusFilter.value = "all";
         renderCalendar();
         searchFilter.focus();
     });
 
-    updateIndicators();
+    populateServiceFilter();
+    updatePendingState();
     renderCalendar();
 }());

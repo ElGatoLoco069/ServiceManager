@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<title>Agenda de Serviços | Service Manager</title>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/diary.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/diary.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+{% now "Y-m-d" as agenda_today_iso %}
+<div class="agenda-page" data-agenda-page data-agenda-today="{{ agenda_today_iso }}">
+    <header class="agenda-page__header">
+        <div class="agenda-page__intro">
+            <h1>Agenda de Serviços</h1>
+            <p>Organize as solicitações e acompanhe os serviços programados.</p>
+        </div>
+    </header>
+
+    {% with pending_requests=context.get_awaiting_service_request %}
+    <section class="agenda-panel pending-requests" aria-labelledby="pending-requests-title">
+        <header class="agenda-panel__heading">
+            <div>
+                <h2 id="pending-requests-title">Solicitações pendentes de agendamento</h2>
+                <p>Solicitações recebidas que ainda precisam de data e horário.</p>
+            </div>
+            {% with pending_total=pending_requests|length %}
+            <span class="agenda-count" data-pending-count aria-live="polite">{{ pending_total }} {% if pending_total == 1 %}solicitação{% else %}solicitações{% endif %}</span>
+            {% endwith %}
+        </header>
+
+        <ol class="agenda-flow" aria-label="Fluxo da solicitação de serviço">
+            <li><span class="agenda-flow__index" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span><span>Solicitação</span></li>
+            <li><span class="agenda-flow__index" aria-hidden="true"><i class="fa-regular fa-clock"></i></span><span>Pendente</span></li>
+            <li><span class="agenda-flow__index" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span><span>Agendamento</span></li>
+            <li><span class="agenda-flow__index" aria-hidden="true"><i class="fa-solid fa-gears"></i></span><span>Execução</span></li>
+            <li><span class="agenda-flow__index" aria-hidden="true"><i class="fa-regular fa-circle-check"></i></span><span>Conclusão</span></li>
+        </ol>
+
+        <div class="pending-requests__viewport" data-pending-viewport{% if not pending_requests %} hidden{% endif %}>
+            <div class="pending-requests__track" data-pending-list>
+                {% for service_request in pending_requests %}
+                <article class="pending-request-card" data-pending-request-card
+                    data-request-id="{{ service_request.public_id }}"
+                    data-protocol="{{ service_request.protocol }}"
+                    data-requester="{{ service_request.requester_name }}">
+                    <header class="pending-request-card__header">
+                        <span class="pending-request-card__protocol">{{ service_request.protocol }}</span>
+                        <span class="status-badge status-badge--waiting">Pendente</span>
+                    </header>
+                    <div class="pending-request-card__body">
+                        <p class="pending-request-card__requester">{{ service_request.requester_name }}</p>
+                        <ul class="pending-request-card__services" data-pending-field="services"
+                            aria-label="Serviços da solicitação {{ service_request.protocol }}">
+                            {% for item in service_request.items.all %}
+                            <li data-pending-service-item
+                                data-item-id="{{ item.public_id }}"
+                                data-service-name="{{ item.service }}"
+                                data-quantity-label="{{ item.amount|floatformat:'-2' }}{% if item.unit %} {{ item.unit }}{% endif %}"
+                                data-scheduled-date="{{ item.scheduled_for|date:'Y-m-d' }}"
+                                data-scheduled-time="{{ item.scheduled_for|date:'H:i' }}"
+                                data-status="{{ item.status }}">
+                                <span>{{ item.service }}</span>
+                                <span>{{ item.amount|floatformat:"-2" }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
+                            </li>
+                            {% empty %}
+                            <li><span>Nenhum serviço informado.</span></li>
+                            {% endfor %}
+                        </ul>
+                        <p class="pending-request-card__date">Solicitado em <time datetime="{{ service_request.created_at|date:'c' }}">{{ service_request.created_at|date:'d/m/Y' }}</time></p>
+                    </div>
+                    <footer class="pending-request-card__footer">
+                        <button class="agenda-button agenda-button--primary" type="button" data-schedule-open
+                            aria-haspopup="dialog" aria-controls="schedule-request-dialog">
+                            <i class="fa-regular fa-calendar-plus" aria-hidden="true"></i> Agendar
+                        </button>
+                    </footer>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="agenda-empty agenda-empty--compact" data-pending-empty role="status"{% if pending_requests %} hidden{% endif %}>
+            <span class="agenda-empty__icon" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span>
+            <div>
+                <strong>Nenhuma solicitação aguardando agendamento.</strong>
+                <p>As solicitações pendentes aparecerão aqui quando estiverem disponíveis para esta tela.</p>
+            </div>
+        </div>
+    </section>
+    {% endwith %}
+
+    <section class="agenda-panel calendar-panel" aria-labelledby="calendar-title">
+        <header class="calendar-toolbar">
+            <div class="calendar-toolbar__period">
+                <button class="agenda-button" type="button" data-calendar-today>
+                    Hoje
+                </button>
+                <div class="calendar-toolbar__arrows" role="group" aria-label="Navegar no calendário">
+                    <button class="agenda-icon-button" type="button" data-calendar-previous aria-label="Período anterior" title="Período anterior">
+                        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <button class="agenda-icon-button" type="button" data-calendar-next aria-label="Próximo período" title="Próximo período">
+                        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="calendar-toolbar__title">
+                    <h2 id="calendar-title" data-calendar-period>Agenda</h2>
+                    <span data-calendar-result-count aria-live="polite">0 serviços neste período</span>
+                </div>
+            </div>
+
+            <div class="calendar-view-switch" role="group" aria-label="Visualização do calendário">
+                <button type="button" data-calendar-view-button="month" aria-pressed="true">Mês</button>
+                <button type="button" data-calendar-view-button="week" aria-pressed="false">Semana</button>
+                <button type="button" data-calendar-view-button="day" aria-pressed="false">Dia</button>
+            </div>
+        </header>
+
+        <div class="calendar-filters" aria-label="Filtros da agenda">
+            <div class="calendar-filter calendar-filter--search">
+                <label for="agenda-search">Busca</label>
+                <div class="calendar-filter__control">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input id="agenda-search" type="search" placeholder="Buscar protocolo ou solicitante..."
+                        autocomplete="off" data-calendar-search>
+                </div>
+            </div>
+            <div class="calendar-filter">
+                <label for="agenda-service">Serviço</label>
+                <select id="agenda-service" data-calendar-service>
+                    <option value="all">Todos os serviços</option>
+                    {% for service in context.services %}
+                        {% if service.is_active %}
+                        <option value="{{ service.name }}">{{ service.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="calendar-filter">
+                <label for="agenda-status">Status</label>
+                <select id="agenda-status" data-calendar-status>
+                    <option value="all">Todos os status</option>
+                    <option value="scheduled">Agendado</option>
+                    <option value="confirmed">Confirmado</option>
+                    <option value="in-progress">Em execução</option>
+                    <option value="completed">Concluído</option>
+                    <option value="cancelled">Cancelado</option>
+                </select>
+            </div>
+            <button class="calendar-filters__reset" type="button" data-calendar-reset disabled>
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Limpar filtros
+            </button>
+        </div>
+
+        {% comment %}
+            Fonte exclusivamente DOM para os itens já enviados pela view. Não há
+            dados demonstrativos nem chamada de API; o JavaScript apenas distribui
+            no calendário os itens que já possuem scheduled_for.
+        {% endcomment %}
+        <div data-agenda-event-source hidden>
+            {% for service_request in context.get_all %}
+                {% for item in service_request.items.all %}
+                    {% if item.scheduled_for %}
+                    <span data-agenda-event
+                        data-id="{{ item.public_id }}"
+                        data-protocol="{{ service_request.protocol }}"
+                        data-requester="{{ service_request.requester_name }}"
+                        data-phone="{{ service_request.requester_phone|default_if_none:'' }}"
+                        data-service="{{ item.service }}"
+                        data-services="{{ item.service }}"
+                        data-quantity="{{ item.amount|floatformat:'-2' }}"
+                        data-unit="{{ item.unit|default_if_none:'' }}"
+                        data-location="{{ service_request.service_address }}{% if service_request.service_number %}, {{ service_request.service_number }}{% endif %}{% if service_request.service_neighborhood %} — {{ service_request.service_neighborhood }}{% endif %}"
+                        data-date="{{ item.scheduled_for|date:'Y-m-d' }}"
+                        data-time="{{ item.scheduled_for|date:'H:i' }}"
+                        data-status="{{ item.status }}"
+                        data-notes="{{ service_request.notes|default_if_none:'' }}"></span>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <div class="calendar-scroll" tabindex="0" role="region" aria-label="Calendário de serviços">
+            <div class="calendar-board" data-calendar-board data-calendar-view="month">
+                <div class="calendar-weekdays" data-calendar-weekdays aria-hidden="true">
+                    <span>Dom</span>
+                    <span>Seg</span>
+                    <span>Ter</span>
+                    <span>Qua</span>
+                    <span>Qui</span>
+                    <span>Sex</span>
+                    <span>Sáb</span>
+                </div>
+                <div class="calendar-grid" data-calendar-grid role="grid" aria-labelledby="calendar-title"></div>
+            </div>
+        </div>
+
+        <p class="calendar-scroll-hint"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Deslize horizontalmente para ver todos os dias.</p>
+
+        <div class="agenda-empty agenda-empty--calendar" data-calendar-empty role="status">
+            <span class="agenda-empty__icon" aria-hidden="true"><i class="fa-regular fa-calendar-xmark"></i></span>
+            <div>
+                <strong>Nenhum serviço agendado para este período.</strong>
+                <p>Altere o período ou os filtros para consultar outros agendamentos.</p>
+            </div>
+        </div>
+
+        <footer class="calendar-legend" aria-label="Legenda dos status">
+            <span class="status-badge status-badge--scheduled"><i class="fa-solid fa-circle" aria-hidden="true"></i> Agendado</span>
+            <span class="status-badge status-badge--confirmed"><i class="fa-solid fa-circle" aria-hidden="true"></i> Confirmado</span>
+            <span class="status-badge status-badge--in-progress"><i class="fa-solid fa-circle" aria-hidden="true"></i> Em execução</span>
+            <span class="status-badge status-badge--completed"><i class="fa-solid fa-circle" aria-hidden="true"></i> Concluído</span>
+            <span class="status-badge status-badge--cancelled"><i class="fa-solid fa-circle" aria-hidden="true"></i> Cancelado</span>
+        </footer>
+
+        <noscript>
+            <p class="agenda-noscript">Ative o JavaScript para navegar entre mês, semana e dia e usar os filtros visuais.</p>
+        </noscript>
+    </section>
+
+    <dialog class="agenda-dialog agenda-dialog--schedule" id="schedule-request-dialog" data-schedule-dialog
+        aria-labelledby="schedule-dialog-title" aria-describedby="schedule-dialog-description">
+        <header class="agenda-dialog__header">
+            <span class="agenda-dialog__icon" aria-hidden="true"><i class="fa-regular fa-calendar-plus"></i></span>
+            <div class="agenda-dialog__intro">
+                <h2 id="schedule-dialog-title" tabindex="-1">Agendar Solicitação</h2>
+                <p id="schedule-dialog-description">Informe data e horário somente nos itens que deseja agendar.</p>
+            </div>
+            <button class="agenda-dialog__close" type="button" data-schedule-close aria-label="Fechar modal de agendamento" title="Fechar">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <form class="agenda-dialog__form" action="{% url 'view_diary' %}" method="post" data-schedule-form
+            data-schedule-action-template="{% url 'schedule_request_service' service_request_id='REQUEST_ID' %}">
+            {% csrf_token %}
+            <input type="hidden" name="schedule_items" value="" data-schedule-payload>
+
+            <div class="agenda-dialog__body">
+                <div class="schedule-dialog__layout">
+                    <div class="schedule-dialog__main">
+                        <dl class="agenda-dialog__summary">
+                            <div><dt>Solicitação</dt><dd data-schedule-detail="protocol">—</dd></div>
+                            <div><dt>Solicitante</dt><dd data-schedule-detail="requester">—</dd></div>
+                        </dl>
+
+                        <section class="schedule-items" aria-labelledby="schedule-items-title">
+                            <header class="schedule-items__heading">
+                                <div>
+                                    <h3 id="schedule-items-title">Serviços e programação</h3>
+                                    <p>Data e horário são opcionais, mas devem ser preenchidos juntos.</p>
+                                </div>
+                                <span class="agenda-count" data-schedule-item-count>0 itens</span>
+                            </header>
+                            <div class="schedule-items__list" data-schedule-items></div>
+                            <div class="schedule-items__empty" data-schedule-items-empty hidden role="status">
+                                Nenhum item de serviço disponível nesta solicitação.
+                            </div>
+                        </section>
+
+                        <div class="agenda-dialog__fields agenda-dialog__fields--notes">
+                            <div class="agenda-dialog__field agenda-dialog__field--wide">
+                                <label for="schedule-notes">Observações</label>
+                                <textarea id="schedule-notes" name="notes" rows="4" placeholder="Inclua uma orientação para o agendamento, se necessário."></textarea>
+                            </div>
+                        </div>
+                        <p class="agenda-dialog__notice"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Ao confirmar, os dados serão enviados ao agendamento por POST.</p>
+                    </div>
+
+                    <aside class="schedule-preview" aria-labelledby="schedule-preview-title">
+                        <header class="schedule-preview__header">
+                            <span class="schedule-preview__icon" aria-hidden="true">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </span>
+                            <div>
+                                <h3 id="schedule-preview-title">Agenda do dia</h3>
+                                <time data-schedule-preview-date>Selecione uma data</time>
+                            </div>
+                        </header>
+
+                        <div class="schedule-preview__selection" data-schedule-preview-selection hidden>
+                            <span><i class="fa-regular fa-clock" aria-hidden="true"></i> Horário selecionado</span>
+                            <strong data-schedule-preview-selected-time>--:--</strong>
+                        </div>
+
+                        <p class="schedule-preview__warning" data-schedule-preview-conflict hidden role="status" aria-live="polite">
+                            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                            Existe um serviço agendado neste período.
+                        </p>
+
+                        <div class="schedule-preview__empty" data-schedule-preview-prompt role="status">
+                            <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+                            <span>Selecione uma data para visualizar os agendamentos.</span>
+                        </div>
+
+                        <div class="schedule-preview__empty" data-schedule-preview-clear hidden role="status">
+                            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                            <span>Nenhum serviço agendado para este dia.</span>
+                        </div>
+
+                        <ul class="schedule-preview__list" data-schedule-preview-list hidden
+                            aria-label="Compromissos da data selecionada"></ul>
+                    </aside>
+                </div>
+            </div>
+
+            <footer class="agenda-dialog__footer">
+                <button class="agenda-button" type="button" data-schedule-close>Cancelar</button>
+                <button class="agenda-button agenda-button--primary" type="submit" data-schedule-confirm>
+                    <i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Confirmar agendamento
+                </button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog class="agenda-dialog agenda-dialog--details" id="appointment-details-dialog" data-appointment-dialog
+        aria-labelledby="appointment-dialog-title" aria-describedby="appointment-dialog-description">
+        <header class="agenda-dialog__header">
+            <span class="agenda-dialog__icon" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span>
+            <div class="agenda-dialog__intro">
+                <h2 id="appointment-dialog-title" tabindex="-1">Detalhes do Agendamento</h2>
+                <p id="appointment-dialog-description">Informações disponíveis no evento selecionado.</p>
+            </div>
+            <button class="agenda-dialog__close" type="button" data-appointment-close aria-label="Fechar detalhes do agendamento" title="Fechar">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <div class="agenda-dialog__body">
+            <div class="appointment-status-row">
+                <span class="status-badge status-badge--scheduled" data-appointment-status>Agendado</span>
+            </div>
+            <dl class="appointment-details">
+                <div><dt>Protocolo</dt><dd data-appointment-detail="protocol">—</dd></div>
+                <div><dt>Solicitante</dt><dd data-appointment-detail="requester">—</dd></div>
+                <div><dt>Telefone</dt><dd data-appointment-detail="phone">—</dd></div>
+                <div><dt>Data</dt><dd data-appointment-detail="dateLabel">—</dd></div>
+                <div><dt>Horário</dt><dd data-appointment-detail="time">—</dd></div>
+                <div class="appointment-details__wide"><dt>Local do serviço</dt><dd data-appointment-detail="location">—</dd></div>
+                <div class="appointment-details__wide"><dt>Serviços</dt><dd data-appointment-detail="services">—</dd></div>
+                <div class="appointment-details__wide"><dt>Observações</dt><dd data-appointment-detail="notes">—</dd></div>
+            </dl>
+        </div>
+
+        <footer class="agenda-dialog__footer">
+            <button class="agenda-button agenda-button--primary" type="button" data-appointment-close>Fechar</button>
+        </footer>
+    </dialog>
+</div>
+{% endblock %}

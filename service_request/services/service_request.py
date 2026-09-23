@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.utils import timezone
 
 from datetime import datetime
 import random
@@ -9,7 +10,42 @@ from decimal import Decimal
 from service_request.models import ServiceRequest, ServiceRequestItem
 from registers.models import ServiceType
 
+import re
+
 class ServiceRequestService:
+
+    @staticmethod
+    def get_all():
+
+        return ServiceRequest.objects.all()
+
+
+    @staticmethod
+    def get_awaiting_service_request():
+
+        return ServiceRequest.objects.filter(status=ServiceRequest.Status.REQUESTED)
+
+
+    @staticmethod
+    def get_services_scheduled_today():
+
+        today = timezone.now().date()
+        
+        return ServiceRequestItem.objects.filter(scheduled_for=today)
+
+
+    @staticmethod
+    def get_services_in_execution():
+
+        return ServiceRequestItem.objects.filter(status=ServiceRequestItem.Status.IN_PROGRESS)
+
+
+    @staticmethod
+    def get_services_completed_today():
+        today = timezone.now().date()
+        
+        return ServiceRequestItem.objects.filter(updated_at=today, status=ServiceRequestItem.Status.COMPLETED)
+
 
     @staticmethod
     def read_form(request):
@@ -101,11 +137,14 @@ class ServiceRequestService:
 
         try:
 
+            document = context['requester_document']
+            document = re.sub(r"\D", "", document)
+            
             service_request = ServiceRequest.objects.create(
                 protocol=protocol,
                 requester_name=context['requester_name'],
                 requester_phone=context['requester_phone'],
-                requester_document=context['requester_document'],
+                requester_document=document,
                 requester_email=context['requester_email'],
                 service_postal_code=context['service_postal_code'],
                 service_address=context['service_address'],

@@ -17,18 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from accounts.views import AuthenticationView, logout_view
+from accounts.views import AuthenticationView, logout_view, UserProfileView
 from dashboard.views import HomeView
 
 from registers.views import ListServiceTypeView, CreateServiceTypeView, UpdateServiceTypeView
-from diary.views import DiaryView
-from service_request.views import CreateServiceRequestView, ServiceRequestFormView
+from diary.views import DiaryView, ScheduleServiceItemView
+from service_request.views import CreateServiceRequestView, ServiceRequestFormView, SearchProtocolView, ProtocolDetailView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', AuthenticationView.as_view(), name="auth_clean"),
     path('accounts/auth/', AuthenticationView.as_view(), name='auth'),
     path('accounts/logout/', logout_view.as_view(), name='logout'),
+    path("accounts/user_profile/", UserProfileView.as_view(), name="user_profile"),
 
     path("dashboard/home/", HomeView.as_view(), name="home"),
 
@@ -37,14 +38,12 @@ urlpatterns = [
     path("registers/update_service/<str:uuid>/", UpdateServiceTypeView.as_view(), name="update_service"),
 
     path("diary/view/", DiaryView.as_view(), name="view_diary"),
-    path(
-        "service_request/service_request_form/",
-        ServiceRequestFormView.as_view(),
-        name="service_request_form",
-    ),
-    path(
-        "service_request/create_service_request/",
-        CreateServiceRequestView.as_view(),
-        name="create_service_request",
-    ),
+    path("diary/request_service/schedule/<str:service_request_id>/", ScheduleServiceItemView.as_view(), name="schedule_request_service"),
+    path("service_request/service_request_form/", ServiceRequestFormView.as_view(), name="service_request_form"),
+    path("service_request/create_service_request/", CreateServiceRequestView.as_view(), name="create_service_request"),
+
+    path("protocol/consult_protocol/", SearchProtocolView.as_view(), name="consult_protocol"),
+    path("protocol/protocol_detail/", ProtocolDetailView.as_view(), name="protocol_detail"),
+
+
 ]

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'diary',
     'service_request',
     'settings',
+    'field_operator',
 ]
 
 MIDDLEWARE = [
@@ -154,7 +155,8 @@ JAZZMIN_SETTINGS = {
         "auth.user": "fas fa-user",
         "auth.group": "fas fa-users",
         "registers.ServiceType": "fas fa-file-alt", 
-
-        "settings.DomainSetting": "fas fa-earth-americas"
+        "service_request.ServiceRequest": "fas fa-clipboard-list",
+        "service_request.ServiceRequestItem": "fas fa-list-ul",
+        "settings.DomainSetting": "fas fa-earth-americas",
     },
 }

@@ -1,9 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.views.generic import View
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from accounts.services import AuthenticationService
-
+from accounts.services.accounts import AuthenticationService
+from accounts.services.profile import get_profile_user
 # Create your views here.
 
 class AuthenticationView(View):
@@ -27,9 +27,11 @@ class logout_view(View):
         return AuthenticationService.logout_service(request)
 
 
-def page_not_found(request, exception):
-    return render(
-        request,
-        "404_maqflow.html",
-        status=404,
-    )
+
+@method_decorator(login_required(login_url="/accounts/auth/"), name="dispatch")
+class UserProfileView(View):
+
+    def get(self, request):
+
+        return get_profile_user(request)
+

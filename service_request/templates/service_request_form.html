@@ -6,10 +6,18 @@
 {% block extra_js %}<script src="{% static 'js/service_request.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-<div class="service-request" data-service-request>
+<div class="service-request" data-service-request data-draft-storage-key="service-request-draft:v1:{{ request.user.pk }}">
     <header class="service-request__header">
-        <p class="service-request__eyebrow">Novo atendimento</p>
-        <h1>Registrar solicitação de serviço</h1>
+        <div class="service-request__header-copy">
+            <p class="service-request__eyebrow">Novo atendimento</p>
+            <h1>Registrar solicitação de serviço</h1>
+            <p class="service-request__draft-status" data-draft-status role="status" aria-live="polite" hidden></p>
+        </div>
+        <button class="service-request__clear" type="button" data-service-request-clear
+            aria-label="Limpar formulário e apagar rascunho" title="Limpar formulário">
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            Limpar formulário
+        </button>
     </header>
 
     <form class="service-request__form" action="{% url 'create_service_request' %}" method="post" data-service-request-form>
@@ -121,7 +129,7 @@
         </section>
 
         <footer class="service-request__footer">
-            <a class="service-request__cancel" href="{% url 'home' %}">Cancelar</a>
+            <a class="service-request__cancel" href="{% url 'home' %}" data-draft-discard>Cancelar</a>
             <button class="service-request__submit" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Registrar solicitação</button>
         </footer>
     </form>

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/profile.js' %}" defer></script>
+{% endblock %}
+
+{% block extra_head %}
+<title>Perfil | Service Manager</title>
+{% endblock %}
+
+{% block content %}
+{% with full_name=profile.full_name|default:"João Emerson Pinto" username=profile.username|default:"joao.emerson" job_title=profile.job_title|default:"Analista de TI" email=profile.email|default:"joao.emerson@cafelandia.pr.gov.br" department=profile.department|default:"Tecnologia da Informação" system_profile=profile.system_profile|default:"Operador" initials=profile.initials|default:"JE" last_access=profile.last_access|default:"22/09/2026 às 10:48" %}
+<div class="profile-page" data-profile-page>
+    <header class="profile-page__header">
+        <div>
+            <h1>Perfil</h1>
+            <p>Consulte seus dados, preferências e configurações da conta.</p>
+        </div>
+    </header>
+
+    <div class="profile-layout">
+        <aside class="profile-summary-card" aria-labelledby="profile-user-name">
+            <div class="profile-summary-card__identity">
+                <span class="profile-avatar" aria-label="Iniciais de {{ full_name }}" style="text-transform: uppercase;">
+                    {% with names=request.user.get_full_name.split %}
+                        {{ names.0|slice:":1" }}{{ names.1|slice:":1" }}
+                    {% endwith %}
+                </span>
+                <div>
+                    <h2 id="profile-user-name">{{ context.user.get_full_name }}</h2>
+                </div>
+            </div>
+
+            <span class="profile-account-status">
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                Conta ativa
+            </span>
+
+            <dl class="profile-summary-list">
+                <div class="profile-summary-list__item">
+                    <dt>
+                        <span class="profile-summary-list__icon" aria-hidden="true">
+                            <i class="fa-solid fa-building"></i>
+                        </span>
+                        Setor
+                    </dt>
+                    <dd>{{ context.profile.department }}</dd>
+                </div>
+                <div class="profile-summary-list__item">
+                    <dt>
+                        <span class="profile-summary-list__icon" aria-hidden="true">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </span>
+                        Perfil no sistema
+                    </dt>
+                    <dd>{{ context.profile.get_profile_type_display }}</dd>
+                </div>
+            </dl>
+        </aside>
+
+        <div class="profile-content">
+            <section class="profile-card" aria-labelledby="account-information-title">
+                <header class="profile-card__header">
+                    <span class="profile-card__icon" aria-hidden="true">
+                        <i class="fa-solid fa-address-card"></i>
+                    </span>
+                    <div>
+                        <h2 id="account-information-title">Informações da conta</h2>
+                        <p>Dados relacionados à sua conta no Service Manager.</p>
+                    </div>
+                </header>
+
+                <div class="profile-fields-grid">
+                    <div class="profile-field">
+                        <label for="profile-full-name">Nome completo</label>
+                        <div class="profile-field__control">
+                            <i class="fa-solid fa-user profile-field__icon" aria-hidden="true"></i>
+                            <input id="profile-full-name" type="text" value="{{ context.user.get_full_name }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="profile-field">
+                        <label for="profile-username">Usuário</label>
+                        <div class="profile-field__control">
+                            <i class="fa-solid fa-at profile-field__icon" aria-hidden="true"></i>
+                            <input id="profile-username" type="text" value="{{ context.user.username }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="profile-field" data-profile-editable>
+                        <label for="profile-email">E-mail</label>
+                        <div class="profile-field__control">
+                            <i class="fa-solid fa-envelope profile-field__icon" aria-hidden="true"></i>
+                            <input
+                                id="profile-email"
+                                type="email"
+                                value="{{ context.user.email }}"
+                                autocomplete="email"
+                                readonly
+                                data-profile-editable-input
+                            >
+                            <button
+                                class="profile-field__edit"
+                                type="button"
+                                aria-label="Editar e-mail"
+                                title="Editar e-mail"
+                                data-profile-edit-button
+                                data-edit-label="Editar e-mail"
+                                data-confirm-label="Concluir edição do e-mail"
+                            >
+                                <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="profile-field" data-profile-editable>
+                        <label for="profile-department">Setor</label>
+                        <div class="profile-field__control">
+                            <i class="fa-solid fa-building profile-field__icon" aria-hidden="true"></i>
+                            <input
+                                id="profile-department"
+                                type="text"
+                                value="{{ context.profile.department }}"
+                                readonly
+                                data-profile-editable-input
+                            >
+                            <button
+                                class="profile-field__edit"
+                                type="button"
+                                aria-label="Editar setor"
+                                title="Editar setor"
+                                data-profile-edit-button
+                                data-edit-label="Editar setor"
+                                data-confirm-label="Concluir edição do setor"
+                            >
+                                <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-information-note">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    <p>Nome e usuário são informações vinculadas à conta. E-mail e setor podem ser atualizados quando necessário.</p>
+                </div>
+            </section>
+
+            <section class="profile-card" aria-labelledby="preferences-title">
+                <header class="profile-card__header">
+                    <span class="profile-card__icon" aria-hidden="true">
+                        <i class="fa-solid fa-sliders"></i>
+                    </span>
+                    <div>
+                        <h2 id="preferences-title">Preferências</h2>
+                        <p>Personalize a experiência de uso do sistema.</p>
+                    </div>
+                </header>
+
+                <div class="profile-setting">
+                    <div class="profile-setting__copy">
+                        <h3>Tema da interface</h3>
+                        <p>Escolha como deseja visualizar o Service Manager.</p>
+                    </div>
+                    <div class="profile-theme-options" role="group" aria-label="Tema da interface">
+                        <button type="button" data-profile-theme="light" aria-pressed="false">
+                            <i class="fa-solid fa-sun" aria-hidden="true"></i>
+                            Claro
+                        </button>
+                        <button type="button" data-profile-theme="dark" aria-pressed="false">
+                            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                            Escuro
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-card" aria-labelledby="security-title">
+                <header class="profile-card__header">
+                    <span class="profile-card__icon" aria-hidden="true">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </span>
+                    <div>
+                        <h2 id="security-title">Segurança</h2>
+                        <p>Informações relacionadas ao acesso à sua conta.</p>
+                    </div>
+                </header>
+
+                <div class="profile-security-panel">
+                    <div class="profile-security-panel__status">
+                        <div>
+                            <h3>Segurança da conta</h3>
+                            <p>Informações relacionadas ao acesso ao Service Manager.</p>
+                        </div>
+                        <span>
+                            <i class="fa-solid fa-check" aria-hidden="true"></i>
+                            Acesso ativo
+                        </span>
+                    </div>
+
+                    <dl class="profile-last-access">
+                        <div>
+                            <dt>
+                                <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                                Último acesso
+                            </dt>
+                            <dd>{{ context.user.last_login }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}

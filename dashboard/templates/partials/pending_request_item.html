@@ -1,4 +1,7 @@
-<li class="pending-item" data-pending-request-item>
+<li class="pending-item" data-pending-request-item
+    data-request-id="{{ service_request.public_id }}"
+    data-protocol="{{ service_request.protocol }}"
+    data-requester="{{ service_request.requester_name }}">
     <div class="pending-item__heading">
         <span class="pending-item__protocol">{{ service_request.protocol }}</span>
         <span class="badge badge--warning">Aguardando</span>
@@ -9,8 +12,11 @@
         {{ service_request.service_address }}{% if service_request.service_number %}, {{ service_request.service_number }}{% endif %} — {{ service_request.service_neighborhood }}
     </span>
     <ul class="pending-item__services" aria-label="Serviços da solicitação {{ service_request.protocol }}">
-        {% for item in service_request.items.all %}
-        <li>
+        {% for item in service_request.pending_items %}
+        <li data-pending-service-item
+            data-item-id="{{ item.public_id }}"
+            data-service-name="{{ item.service }}"
+            data-quantity-label="{{ item.amount|floatformat:'-2' }}{% if item.unit %} {{ item.unit }}{% endif %}">
             <span>{{ item.service }}</span>
             <span class="pending-item__quantity">{{ item.amount|floatformat:"-2" }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
         </li>
@@ -18,5 +24,12 @@
         <li class="pending-item__service-empty">Nenhum serviço informado.</li>
         {% endfor %}
     </ul>
-    <span class="pending-item__date">Solicitada em <time datetime="{{ service_request.created_at|date:'c' }}">{{ service_request.created_at|date:"d/m/Y \à\s H:i" }}</time></span>
+    <footer class="pending-item__footer">
+        <span class="pending-item__date">Solicitada em <time datetime="{{ service_request.created_at|date:'c' }}">{{ service_request.created_at|date:"d/m/Y \à\s H:i" }}</time></span>
+        <button class="pending-item__schedule" type="button" data-dashboard-schedule-open
+            aria-haspopup="dialog" aria-controls="dashboard-schedule-dialog">
+            <i class="fa-regular fa-calendar-plus" aria-hidden="true"></i>
+            Agendar
+        </button>
+    </footer>
 </li>

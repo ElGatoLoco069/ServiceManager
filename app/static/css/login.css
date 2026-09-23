@@ -672,6 +672,42 @@ input {
     display: none;
 }
 
+.login-protocol {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 12px;
+    padding: 13px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--ui-blue-700);
+    border: 1px solid var(--ui-blue-700);
+    border-radius: 12px;
+    background: var(--ui-white);
+    font-size: 14px;
+    font-weight: 750;
+    text-decoration: none;
+    transition: color 140ms ease, background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.login-protocol:hover {
+    color: #0b5da6;
+    background: #f2f8fd;
+    box-shadow: 0 8px 18px rgba(12, 94, 168, 0.12);
+    transform: translateY(-1px);
+}
+
+.login-protocol:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+.login-protocol:focus-visible {
+    outline: 3px solid rgba(20, 118, 201, 0.3);
+    outline-offset: 3px;
+}
+
 .login-help {
     margin-top: 24px;
     padding: 15px;
@@ -958,6 +994,17 @@ html[data-theme="dark"] .login-restricted {
 }
 
 html[data-theme="dark"] .login-password-toggle:hover {
+    color: var(--color-primary-hover);
+    background: var(--color-surface-secondary);
+}
+
+html[data-theme="dark"] .login-protocol {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: transparent;
+}
+
+html[data-theme="dark"] .login-protocol:hover {
     color: var(--color-primary-hover);
     background: var(--color-surface-secondary);
 }

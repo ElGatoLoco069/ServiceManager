@@ -43,12 +43,18 @@ html[data-theme="light"] .service-request {
 .service-request * { box-sizing: border-box; }
 
 .service-request__header {
+    position: relative;
     padding: 23px 28px 21px;
     border-top: 3px solid var(--color-primary);
     border-bottom: 1px solid var(--request-divider);
     background: linear-gradient(115deg,
         var(--request-header-start),
         var(--request-header-end));
+}
+
+.service-request__header-copy {
+    min-width: 0;
+    padding-right: 190px;
 }
 
 .service-request__header p,
@@ -72,12 +78,22 @@ html[data-theme="light"] .service-request {
     line-height: 1.22;
 }
 
-.service-request__header > p:last-child {
-    margin-top: 6px;
+.service-request__header .service-request__draft-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 12px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
     color: var(--color-text-secondary);
-    font-size: 13px;
-    line-height: 1.45;
+    background: var(--color-surface);
+    font-size: 12px;
+    line-height: 1.35;
 }
+
+.service-request__header .service-request__draft-status[hidden] { display: none; }
+.service-request__header .service-request__draft-status[data-state="error"] { color: var(--color-danger); }
 
 .service-request__section {
     padding: 22px 28px 24px;
@@ -214,6 +230,7 @@ html[data-theme="light"] .service-request {
 
 .service-request__add,
 .service-request__remove,
+.service-request__clear,
 .service-request__cancel,
 .service-request__submit {
     display: inline-flex;
@@ -228,6 +245,19 @@ html[data-theme="light"] .service-request {
     text-decoration: none;
     transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
+
+.service-request__clear {
+    position: absolute;
+    top: 23px;
+    right: 28px;
+    min-height: 40px;
+    padding: 9px 13px;
+    border: 1px solid color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
+    color: var(--color-danger);
+    background: var(--color-surface);
+}
+
+.service-request__clear:hover { background: var(--color-danger-soft); }
 
 .service-request__add {
     min-height: 44px;
@@ -314,6 +344,7 @@ html[data-theme="light"] .service-request__submit:disabled {
 
 .service-request__add:focus-visible,
 .service-request__remove:focus-visible,
+.service-request__clear:focus-visible,
 .service-request__cancel:focus-visible,
 .service-request__submit:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 
@@ -329,6 +360,12 @@ html[data-theme="light"] .service-request__submit:disabled {
 }
 
 @media (max-width: 760px) {
+    .service-request__header-copy { padding-right: 0; }
+    .service-request__clear {
+        position: static;
+        width: 100%;
+        margin-top: 16px;
+    }
     .service-request__fields--requester { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .service-request__fields--location { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .service-request__field--large,
@@ -368,6 +405,7 @@ html[data-theme="light"] .service-request__submit:disabled {
     .service-request__field textarea,
     .service-request__add,
     .service-request__remove,
+    .service-request__clear,
     .service-request__cancel,
     .service-request__submit { transition: none; }
 }

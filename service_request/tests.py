@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from service_request.models import ServiceRequest
+from registers.models import ServiceType
+from service_request.models import ServiceRequest, ServiceRequestItem
 
 
 class ServiceRequestViewsTests(TestCase):
@@ -11,6 +12,12 @@ class ServiceRequestViewsTests(TestCase):
         cls.user = get_user_model().objects.create_user(
             username="service-request-test-user",
             password="test-password",
+        )
+        cls.service_type = ServiceType.objects.create(
+            name="Serviço de teste",
+            default_unit="UND",
+            created_by=cls.user,
+            updated_by=cls.user,
         )
 
     def setUp(self):
@@ -23,6 +30,14 @@ class ServiceRequestViewsTests(TestCase):
         self.assertTemplateUsed(response, "service_request_form.html")
         self.assertContains(response, "Registrar solicitação de serviço")
         self.assertContains(response, reverse("create_service_request"))
+        self.assertContains(
+            response,
+            f'data-draft-storage-key="service-request-draft:v1:{self.user.pk}"',
+        )
+        self.assertContains(response, "data-draft-status")
+        self.assertContains(response, "data-draft-discard")
+        self.assertContains(response, "data-service-request-clear")
+        self.assertContains(response, "Limpar formulário")
 
     def test_create_service_request_persists_and_redirects_to_form(self):
         response = self.client.post(
@@ -32,6 +47,9 @@ class ServiceRequestViewsTests(TestCase):
                 "requester_phone": "(45) 99999-9999",
                 "service_address": "Rua de Teste",
                 "service_neighborhood": "Centro",
+                "services": [str(self.service_type.public_id)],
+                "quantities": ["2"],
+                "units": ["UND"],
             },
         )
 
@@ -40,3 +58,7 @@ class ServiceRequestViewsTests(TestCase):
         request = ServiceRequest.objects.get()
         self.assertEqual(request.requester_name, "Pessoa de Teste")
         self.assertEqual(request.created_by, self.user)
+        item = ServiceRequestItem.objects.get(service_request=request)
+        self.assertEqual(item.service_id, self.service_type)
+        self.assertEqual(item.amount, 2)
+        self.assertEqual(item.unit, "UND")

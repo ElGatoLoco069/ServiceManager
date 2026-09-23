@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b2d55">
+    <meta name="description" content="Consulte o andamento de uma solicitação pelo número do protocolo.">
+    <title>Consulta de Protocolos | Service Manager</title>
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/fontawesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/font-bindings.css' %}">
+    <link rel="stylesheet" href="{% static 'notifications/toast.css' %}">
+    <link rel="stylesheet" href="{% static 'css/protocol_search.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/logo.svg' %}" type="image/x-icon">
+    <script src="{% static 'notifications/toast.js' %}" defer></script>
+</head>
+
+<body class="protocol-page">
+    {% include 'includes/toast_notifications.html' %}
+
+    <a class="protocol-skip-link" href="#protocol-search-form">Ir para a consulta de protocolo</a>
+
+    <header class="public-header" aria-label="Cabeçalho da consulta pública">
+        <div class="public-header__inner">
+            <div class="public-header__brand">
+                <span class="public-header__icon" aria-hidden="true">
+                    <i class="fa-solid fa-file-lines"></i>
+                </span>
+                <div>
+                    <p class="public-header__product">Service Manager</p>
+                    <p class="public-header__subtitle">Serviços ao cidadão</p>
+                </div>
+            </div>
+
+            <p class="public-header__context">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                Consulta de Protocolos
+            </p>
+        </div>
+    </header>
+
+    <main class="protocol-main">
+        <section class="protocol-card" aria-labelledby="protocol-search-title">
+            <div class="protocol-card__icon" aria-hidden="true">
+                <i class="fa-solid fa-file-lines"></i>
+            </div>
+
+            <header class="protocol-card__header">
+                <p class="protocol-card__eyebrow">Área de consulta</p>
+                <h1 id="protocol-search-title">Consultar protocolo</h1>
+                <p class="protocol-card__description">
+                    Informe os dados abaixo para acompanhar o andamento da sua solicitação.
+                </p>
+                <p class="protocol-card__guidance">
+                    Utilize o número do protocolo recebido no momento da solicitação.
+                </p>
+            </header>
+
+            <form
+                class="protocol-form"
+                id="protocol-search-form"
+                action="{% url 'protocol_detail' %}"
+                method="get"
+                autocomplete="off"
+            >
+                <div class="protocol-field">
+                    <label for="protocol-number">Número do protocolo</label>
+                    <div class="protocol-input">
+                        <i class="fa-solid fa-receipt protocol-input__icon" aria-hidden="true"></i>
+                        <input
+                            id="protocol-number"
+                            name="protocol"
+                            type="text"
+                            maxlength="18"
+                            pattern="[A-Za-z]{4}-[0-9]{8}-[0-9]{4}"
+                            placeholder="Ex.: ABCD-20260922-1234"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            spellcheck="false"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="protocol-field">
+                    <label for="document-prefix">4 primeiros dígitos do CPF ou CNPJ</label>
+                    <div class="protocol-input">
+                        <i class="fa-solid fa-id-card protocol-input__icon" aria-hidden="true"></i>
+                        <input
+                            id="document-prefix"
+                            name="verify_code"
+                            type="text"
+                            maxlength="4"
+                            inputmode="numeric"
+                            pattern="[0-9]{4}"
+                            placeholder="Ex.: 1234"
+                            autocomplete="off"
+                            aria-describedby="document-prefix-help"
+                            required
+                        >
+                    </div>
+                    <p class="protocol-field__help" id="document-prefix-help">
+                        Informe os 4 primeiros números do CPF ou CNPJ utilizado na solicitação.
+                    </p>
+                </div>
+
+                <button class="protocol-submit" type="submit">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <span>Consultar protocolo</span>
+                </button>
+            </form>
+
+            <aside class="protocol-support" aria-label="Orientação de atendimento">
+                <span class="protocol-support__icon" aria-hidden="true">
+                    <i class="fa-solid fa-circle-question"></i>
+                </span>
+                <p>
+                    <strong>Não encontrou seu protocolo?</strong>
+                    Entre em contato com o setor responsável pelo atendimento.
+                </p>
+            </aside>
+        </section>
+    </main>
+</body>
+
+</html>

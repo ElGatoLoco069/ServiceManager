@@ -17,12 +17,8 @@
 {% now "Y-m-d" as dashboard_today_iso %}
 {% now "d/m/Y" as dashboard_today %}
 {% with awaiting_requests=context.awaiting_service_request %}
-{% with awaiting_count=awaiting_requests|length %}
-{% comment %}
-    As solicitações aguardando agendamento vêm do contexto real do Dashboard.
-    Os demais indicadores, a agenda e a tabela recente continuam demonstrativos.
-{% endcomment %}
-<div class="dashboard">
+{% with awaiting_count=context.awaiting_count %}
+<div class="dashboard" data-dashboard-today="{{ dashboard_today_iso }}">
     <header class="dashboard__header">
         <div class="dashboard__intro">
             <h1>Dashboard</h1>
@@ -30,7 +26,7 @@
         </div>
         <div class="dashboard__meta">
             <time class="dashboard__date" datetime="{{ dashboard_today_iso }}"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ dashboard_today }}</time>
-            <span class="dashboard__demo">Demais dados: demonstração</span>
+            <span class="dashboard__updated">Atualizado às <time datetime="{{ context.generated_at|date:'c' }}">{{ context.generated_at|time:"H:i" }}</time></span>
         </div>
     </header>
 
@@ -38,7 +34,10 @@
         <dl class="summary-grid">
             <div class="summary-card summary-card--info">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-file-circle-plus"></i></span><span class="summary-card__label">Novas solicitações</span></dt>
-                <dd class="summary-card__result"><strong>3</strong><span>recém-recebidas</span></dd>
+                <dd class="summary-card__result">
+                    <strong>{{ context.new_requests_count }}</strong>
+                    <span>{% if context.new_requests_count == 1 %}recebida hoje{% else %}recebidas hoje{% endif %}</span>
+                </dd>
             </div>
             <div class="summary-card summary-card--warning">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span><span class="summary-card__label">Aguardando agendamento</span></dt>
@@ -49,15 +48,24 @@
             </div>
             <div class="summary-card summary-card--info">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></span><span class="summary-card__label">Agendados para hoje</span></dt>
-                <dd class="summary-card__result"><strong>3</strong><span>na agenda do dia</span></dd>
+                <dd class="summary-card__result">
+                    <strong>{{ context.scheduled_today_count }}</strong>
+                    <span>{% if context.scheduled_today_count == 1 %}serviço na agenda{% else %}serviços na agenda{% endif %}</span>
+                </dd>
             </div>
             <div class="summary-card summary-card--orange">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-gears"></i></span><span class="summary-card__label">Em execução</span></dt>
-                <dd class="summary-card__result"><strong>1</strong><span>serviço em andamento</span></dd>
+                <dd class="summary-card__result">
+                    <strong>{{ context.in_progress_count }}</strong>
+                    <span>{% if context.in_progress_count == 1 %}serviço em andamento{% else %}serviços em andamento{% endif %}</span>
+                </dd>
             </div>
             <div class="summary-card summary-card--success">
                 <dt><span class="summary-card__index" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span><span class="summary-card__label">Concluídos hoje</span></dt>
-                <dd class="summary-card__result"><strong>1</strong><span>serviço finalizado</span></dd>
+                <dd class="summary-card__result">
+                    <strong>{{ context.completed_today_count }}</strong>
+                    <span>{% if context.completed_today_count == 1 %}serviço finalizado{% else %}serviços finalizados{% endif %}</span>
+                </dd>
             </div>
         </dl>
     </section>
@@ -66,52 +74,39 @@
         <section class="dashboard-card schedule-card" aria-labelledby="schedule-title">
             <header class="card-heading">
                 <div><h2 id="schedule-title">Agenda de hoje</h2><p>Acompanhe os serviços programados para o dia.</p></div>
-                <span class="dashboard-count">3 serviços</span>
+                <span class="dashboard-count">{{ context.scheduled_today_count }} {% if context.scheduled_today_count == 1 %}serviço{% else %}serviços{% endif %}</span>
             </header>
+            {% if context.today_schedule %}
             <ol class="schedule-list">
-                <li class="schedule-item">
-                    <time datetime="{{ dashboard_today_iso }}T07:30">07:30</time>
-                    <span class="status-dot status-dot--success" aria-hidden="true"></span>
+                {% for item in context.today_schedule %}
+                <li class="schedule-item" data-dashboard-preview-event
+                    data-date="{{ item.scheduled_for|date:'Y-m-d' }}"
+                    data-time="{{ item.scheduled_for|time:'H:i' }}"
+                    data-service="{{ item.service }}"
+                    data-status="{{ item.status }}"
+                    data-status-label="{{ item.get_status_display }}"
+                    data-item-id="{{ item.public_id }}">
+                    <time datetime="{{ item.scheduled_for|date:'c' }}">{{ item.scheduled_for|time:"H:i" }}</time>
+                    <span class="status-dot {% if item.status == 'completed' %}status-dot--success{% elif item.status == 'in_progress' %}status-dot--orange{% else %}status-dot--info{% endif %}" aria-hidden="true"></span>
                     <div class="schedule-item__details">
-                        <span class="schedule-item__protocol">SRV-2026-000189</span>
-                        <strong>Limpeza de terreno — 1 serviço</strong>
-                        <span class="schedule-item__requester">Ana Costa</span>
+                        <span class="schedule-item__protocol">{{ item.service_request.protocol }}</span>
+                        <strong>{{ item.service }} — {{ item.amount|floatformat:"-2" }}{% if item.unit %} {{ item.unit }}{% endif %}</strong>
+                        <span class="schedule-item__requester">{{ item.service_request.requester_name }}</span>
                         <div class="schedule-item__meta">
-                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Vila Esperança</span>
-                            <span><i class="fa-solid fa-user" aria-hidden="true"></i> Operador: Paulo</span>
+                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ item.service_request.service_address }}{% if item.service_request.service_number %}, {{ item.service_request.service_number }}{% endif %} — {{ item.service_request.service_neighborhood }}</span>
                         </div>
                     </div>
-                    <span class="badge badge--success">Concluído</span>
+                    <span class="badge {% if item.status == 'completed' %}badge--success{% elif item.status == 'in_progress' %}badge--orange{% else %}badge--info{% endif %}">{{ item.get_status_display }}</span>
                 </li>
-                <li class="schedule-item">
-                    <time datetime="{{ dashboard_today_iso }}T08:00">08:00</time>
-                    <span class="status-dot status-dot--info" aria-hidden="true"></span>
-                    <div class="schedule-item__details">
-                        <span class="schedule-item__protocol">SRV-2026-000184</span>
-                        <strong>Transporte de terra — 5 cargas</strong>
-                        <span class="schedule-item__requester">João da Silva</span>
-                        <div class="schedule-item__meta">
-                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Linha São José</span>
-                            <span><i class="fa-solid fa-user" aria-hidden="true"></i> Operador: João Emerson</span>
-                        </div>
-                    </div>
-                    <span class="badge badge--info">Agendado</span>
-                </li>
-                <li class="schedule-item">
-                    <time datetime="{{ dashboard_today_iso }}T13:30">13:30</time>
-                    <span class="status-dot status-dot--orange" aria-hidden="true"></span>
-                    <div class="schedule-item__details">
-                        <span class="schedule-item__protocol">SRV-2026-000191</span>
-                        <strong>Nivelamento de terreno — 1 serviço</strong>
-                        <span class="schedule-item__requester">Maria Oliveira</span>
-                        <div class="schedule-item__meta">
-                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Comunidade Central</span>
-                            <span><i class="fa-solid fa-user" aria-hidden="true"></i> Operador: Carlos</span>
-                        </div>
-                    </div>
-                    <span class="badge badge--orange">Em execução</span>
-                </li>
+                {% endfor %}
             </ol>
+            {% else %}
+            <div class="dashboard-empty" role="status">
+                <span class="dashboard-empty__icon" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span>
+                <strong>Nenhum serviço agendado para hoje</strong>
+                <p>Os próximos agendamentos aparecerão aqui.</p>
+            </div>
+            {% endif %}
         </section>
 
         <section class="dashboard-card pending-card" aria-labelledby="pending-title">
@@ -150,71 +145,55 @@
     <section class="dashboard-card requests-card" aria-labelledby="requests-title">
         <header class="card-heading">
             <div><h2 id="requests-title">Solicitações recentes</h2><p>Últimas solicitações recebidas e suas situações.</p></div>
-            <span class="dashboard-count">5 registros</span>
+            <span class="dashboard-count">{{ context.recent_requests_count }} {% if context.recent_requests_count == 1 %}registro{% else %}registros{% endif %}</span>
         </header>
+        {% if context.recent_requests %}
         <div class="requests-table-wrapper" role="region" aria-labelledby="requests-title" tabindex="0">
             <table class="requests-table">
-                <caption class="sr-only">Cinco solicitações recentes. Dados fictícios para demonstração.</caption>
+                <caption class="sr-only">{{ context.recent_requests_count }} {% if context.recent_requests_count == 1 %}solicitação recente{% else %}solicitações recentes{% endif %}.</caption>
                 <thead class="requests-table__header">
-                    <tr><th scope="col">Protocolo</th><th scope="col">Solicitante</th><th scope="col">Serviços</th><th scope="col">Data</th><th scope="col">Situação</th><th scope="col">Ação</th></tr>
+                    <tr><th scope="col">Protocolo</th><th scope="col">Solicitante</th><th scope="col">Serviços</th><th scope="col">Data</th><th scope="col">Situação</th></tr>
                 </thead>
                 <tbody>
-                    {% comment %}TODO: conectar os botões Ver à rota real de detalhe quando ela existir. Temporariamente desabilitados.{% endcomment %}
+                    {% for service_request in context.recent_requests %}
                     <tr class="request-row">
-                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000191</strong></td>
-                        <td class="request-cell" data-label="Solicitante">Maria Oliveira</td>
-                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Nivelamento de terreno — 1 serviço</li></ul></td>
-                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
-                        <td class="request-cell" data-label="Situação"><span class="badge badge--orange">Em execução</span></td>
-                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000191 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
+                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>{{ service_request.protocol }}</strong></td>
+                        <td class="request-cell" data-label="Solicitante">{{ service_request.requester_name }}</td>
+                        <td class="request-cell request-cell--services" data-label="Serviços">
+                            {% with items=service_request.items.all %}
+                            <strong>{{ items|length }} {% if items|length == 1 %}serviço{% else %}serviços{% endif %}</strong>
+                            <ul>
+                                {% for item in items %}
+                                <li>{{ item.service }} — {{ item.amount|floatformat:"-2" }}{% if item.unit %} {{ item.unit }}{% endif %}</li>
+                                {% empty %}
+                                <li>Nenhum serviço informado.</li>
+                                {% endfor %}
+                            </ul>
+                            {% endwith %}
+                        </td>
+                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ service_request.created_at|date:'c' }}">{{ service_request.created_at|date:"d/m/Y H:i" }}</time></td>
+                        <td class="request-cell" data-label="Situação">
+                            <span class="badge {% if service_request.status == 'completed' %}badge--success{% elif service_request.status == 'in_progress' %}badge--orange{% elif service_request.status == 'scheduled' %}badge--info{% elif service_request.status == 'canceled' %}badge--danger{% else %}badge--warning{% endif %}">{{ service_request.get_status_display }}</span>
+                        </td>
                     </tr>
-                    <tr class="request-row">
-                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000190</strong></td>
-                        <td class="request-cell" data-label="Solicitante">Carlos Pereira</td>
-                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Transporte de cascalho — 4 cargas</li></ul></td>
-                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
-                        <td class="request-cell" data-label="Situação"><span class="badge badge--warning">Aguardando agendamento</span></td>
-                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000190 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
-                    </tr>
-                    <tr class="request-row">
-                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000189</strong></td>
-                        <td class="request-cell" data-label="Solicitante">Ana Costa</td>
-                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Limpeza de terreno — 1 serviço</li></ul></td>
-                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
-                        <td class="request-cell" data-label="Situação"><span class="badge badge--success">Concluído</span></td>
-                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000189 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
-                    </tr>
-                    <tr class="request-row">
-                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000188</strong></td>
-                        <td class="request-cell" data-label="Solicitante">Pedro Santos</td>
-                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>1 serviço</strong><ul><li>Cascalhamento — 1 serviço</li></ul></td>
-                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ dashboard_today_iso }}">{{ dashboard_today }}</time></td>
-                        <td class="request-cell" data-label="Situação"><span class="badge badge--neutral">Solicitado</span></td>
-                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000188 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
-                    </tr>
-                    <tr class="request-row">
-                        <td class="request-cell request-cell--protocol" data-label="Protocolo"><strong>SRV-2026-000184</strong></td>
-                        <td class="request-cell" data-label="Solicitante">João da Silva</td>
-                        <td class="request-cell request-cell--services" data-label="Serviços"><strong>2 serviços</strong><ul><li>Transporte de terra — 5 cargas</li><li>Nivelamento de terreno — 1 serviço</li></ul></td>
-                        <td class="request-cell request-cell--date" data-label="Data"><time datetime="2026-09-07">07/09/2026</time></td>
-                        <td class="request-cell" data-label="Situação"><span class="badge badge--info">Agendado</span></td>
-                        <td class="request-cell" data-label="Ação"><button class="request-action" type="button" disabled aria-label="Ver solicitação SRV-2026-000184 (em breve)" title="Detalhamento disponível em breve"><i class="fa-regular fa-eye" aria-hidden="true"></i> Ver</button></td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="dashboard-empty" role="status">
+            <span class="dashboard-empty__icon" aria-hidden="true"><i class="fa-regular fa-folder-open"></i></span>
+            <strong>Nenhuma solicitação registrada</strong>
+            <p>As solicitações mais recentes aparecerão aqui.</p>
+        </div>
+        {% endif %}
     </section>
 
     <section class="dashboard-card quick-actions" aria-labelledby="quick-actions-title">
-        <header class="card-heading"><div><h2 id="quick-actions-title">Ações rápidas</h2><p id="quick-actions-note">Atalhos disponíveis em breve.</p></div></header>
-        {% comment %}
-            TODO: usar as URLs reais de nova solicitação, listagem e agenda quando
-            essas rotas existirem. Botões temporários, sem ação nem envio de formulário.
-        {% endcomment %}
+        <header class="card-heading"><div><h2 id="quick-actions-title">Ações rápidas</h2><p id="quick-actions-note">Acesse os principais fluxos de atendimento.</p></div></header>
         <div class="quick-actions__buttons" role="group" aria-labelledby="quick-actions-title" aria-describedby="quick-actions-note">
-            <button class="dashboard-button dashboard-button--primary" type="button" disabled><i class="fa-solid fa-plus" aria-hidden="true"></i> Nova Solicitação</button>
-            <button class="dashboard-button" type="button" disabled><i class="fa-solid fa-list-ul" aria-hidden="true"></i> Ver Solicitações</button>
-            <button class="dashboard-button" type="button" disabled><i class="fa-regular fa-calendar" aria-hidden="true"></i> Abrir Agenda</button>
+            <a class="dashboard-button dashboard-button--primary" href="{% url 'service_request_form' %}"><i class="fa-solid fa-plus" aria-hidden="true"></i> Nova Solicitação</a>
+            <a class="dashboard-button" href="{% url 'view_diary' %}"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Abrir Agenda</a>
         </div>
     </section>
 </div>
@@ -244,6 +223,100 @@
         <span>{{ awaiting_count }} {% if awaiting_count == 1 %}solicitação pendente{% else %}solicitações pendentes{% endif %}</span>
         <button class="pending-modal__button" type="button" data-pending-modal-close>Fechar</button>
     </footer>
+</dialog>
+{% endif %}
+
+{% if awaiting_requests %}
+<dialog class="schedule-modal" id="dashboard-schedule-dialog" data-dashboard-schedule-dialog
+    aria-labelledby="dashboard-schedule-title" aria-describedby="dashboard-schedule-description">
+    <header class="schedule-modal__header">
+        <span class="schedule-modal__icon" aria-hidden="true"><i class="fa-regular fa-calendar-plus"></i></span>
+        <div class="schedule-modal__intro">
+            <h2 id="dashboard-schedule-title" tabindex="-1" data-dashboard-schedule-title>Agendar solicitação</h2>
+            <p id="dashboard-schedule-description">Informe a data e o horário dos serviços que deseja agendar.</p>
+        </div>
+        <button class="schedule-modal__close" type="button" data-dashboard-schedule-close
+            aria-label="Fechar agendamento" title="Fechar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </header>
+
+    <form class="schedule-modal__form" action="{% url 'home' %}" method="post" data-dashboard-schedule-form
+        data-schedule-action-template="{% url 'schedule_request_service' service_request_id='REQUEST_ID' %}">
+        {% csrf_token %}
+        <input type="hidden" name="schedule_items" value="" data-dashboard-schedule-payload>
+        <input type="hidden" name="return_to" value="home">
+
+        <div class="schedule-modal__body">
+            <div class="schedule-modal__layout">
+                <div class="schedule-modal__main">
+                    <dl class="schedule-modal__summary">
+                        <div><dt>Solicitação</dt><dd data-dashboard-schedule-detail="protocol">—</dd></div>
+                        <div><dt>Solicitante</dt><dd data-dashboard-schedule-detail="requester">—</dd></div>
+                    </dl>
+
+                    <section class="schedule-modal__services" aria-labelledby="dashboard-schedule-services-title">
+                        <header class="schedule-modal__services-heading">
+                            <div>
+                                <h3 id="dashboard-schedule-services-title">Serviços e programação</h3>
+                                <p>Preencha data e horário juntos em pelo menos um serviço.</p>
+                            </div>
+                            <span class="dashboard-count" data-dashboard-schedule-count>0 itens</span>
+                        </header>
+                        <div class="schedule-modal__service-list" data-dashboard-schedule-items></div>
+                    </section>
+
+                    <p class="schedule-modal__notice" data-dashboard-schedule-notice aria-live="polite">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        Os demais serviços continuarão aguardando agendamento.
+                    </p>
+                </div>
+
+                <aside class="schedule-modal__preview" aria-labelledby="dashboard-schedule-preview-title">
+                    <header class="schedule-modal__preview-header">
+                        <span class="schedule-modal__preview-icon" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span>
+                        <div>
+                            <h3 id="dashboard-schedule-preview-title">Agenda do dia</h3>
+                            <time data-dashboard-preview-date>Selecione uma data</time>
+                        </div>
+                    </header>
+
+                    <div class="schedule-modal__selection" data-dashboard-preview-selection hidden>
+                        <span><i class="fa-regular fa-clock" aria-hidden="true"></i> Horário selecionado</span>
+                        <strong data-dashboard-preview-time>--:--</strong>
+                    </div>
+
+                    <p class="schedule-modal__warning" data-dashboard-preview-conflict hidden role="status" aria-live="polite">
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                        Já existe um serviço agendado neste horário.
+                    </p>
+
+                    <div class="schedule-modal__preview-empty" data-dashboard-preview-prompt role="status">
+                        <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+                        <span>Selecione uma data para visualizar os agendamentos.</span>
+                    </div>
+                    <div class="schedule-modal__preview-empty" data-dashboard-preview-unavailable hidden role="status">
+                        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                        <span>A prévia de outros dias não está disponível no dashboard. Consulte a Agenda para verificar esta data.</span>
+                    </div>
+                    <div class="schedule-modal__preview-empty" data-dashboard-preview-clear hidden role="status">
+                        <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                        <span>Nenhum serviço agendado para este dia.</span>
+                    </div>
+                    <ul class="schedule-modal__preview-list" data-dashboard-preview-list hidden
+                        aria-label="Compromissos da data selecionada"></ul>
+                </aside>
+            </div>
+        </div>
+
+        <footer class="schedule-modal__footer">
+            <button class="schedule-modal__button" type="button" data-dashboard-schedule-close>Cancelar</button>
+            <button class="schedule-modal__button schedule-modal__button--primary" type="submit" data-dashboard-schedule-confirm>
+                <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                Confirmar agendamento
+            </button>
+        </footer>
+    </form>
 </dialog>
 {% endif %}
 {% endwith %}
