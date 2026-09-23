@@ -469,6 +469,7 @@
 .calendar-filter input,
 .calendar-filter select,
 .agenda-dialog__field input,
+.agenda-dialog__field select,
 .agenda-dialog__field textarea {
     width: 100%;
     min-width: 0;
@@ -488,8 +489,15 @@
     opacity: 1;
 }
 
-.calendar-filter select {
+.calendar-filter select,
+.agenda-dialog__field select {
     cursor: pointer;
+}
+
+.agenda-dialog__field input,
+.agenda-dialog__field select,
+.agenda-dialog__field textarea {
+    font-size: 13px;
 }
 
 .calendar-filter__control {
@@ -826,7 +834,7 @@ html:has(.agenda-dialog[open]) {
 }
 
 .agenda-dialog--schedule {
-    width: min(1080px, calc(100% - 32px));
+    width: min(1120px, calc(100% - 32px));
 }
 
 .agenda-dialog__form {
@@ -848,8 +856,9 @@ html:has(.agenda-dialog[open]) {
 .agenda-dialog__header {
     flex: 0 0 auto;
     align-items: center;
-    padding: 22px 24px;
+    padding: 20px 24px;
     border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
 }
 
 .agenda-dialog__icon {
@@ -874,15 +883,26 @@ html:has(.agenda-dialog[open]) {
     line-height: 1.35;
 }
 
+.agenda-dialog__eyebrow {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 760;
+    line-height: 1.3;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
 .agenda-dialog__intro h2:focus {
     outline: 0;
 }
 
 .agenda-dialog__intro p {
-    margin-top: 5px;
+    margin-top: 4px;
     color: var(--color-text-secondary);
-    font-size: 11px;
-    line-height: 1.45;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .agenda-dialog__close {
@@ -894,6 +914,7 @@ html:has(.agenda-dialog[open]) {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 24px;
 }
 
@@ -921,6 +942,13 @@ html:has(.agenda-dialog[open]) {
     min-width: 0;
 }
 
+.agenda-dialog__summary > div {
+    padding: 13px 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 11px;
+    background: var(--color-surface-secondary);
+}
+
 .agenda-dialog__summary-wide,
 .appointment-details__wide {
     grid-column: 1 / -1;
@@ -935,6 +963,13 @@ html:has(.agenda-dialog[open]) {
     line-height: 1.4;
 }
 
+.agenda-dialog__summary dt i {
+    width: 14px;
+    margin-right: 4px;
+    color: var(--color-primary);
+    text-align: center;
+}
+
 .agenda-dialog__summary dd,
 .appointment-details dd {
     margin: 0;
@@ -945,10 +980,107 @@ html:has(.agenda-dialog[open]) {
     overflow-wrap: anywhere;
 }
 
+.agenda-dialog__field--operator label i {
+    margin-right: 6px;
+    color: var(--color-primary);
+}
+
+.schedule-overview {
+    margin-top: 14px;
+    padding: 15px 16px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-primary-soft) 42%, var(--color-surface));
+}
+
+.schedule-overview__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.schedule-overview__header > div:first-child > span {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-weight: 690;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.schedule-overview__header > div:first-child > strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--color-text-primary);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.schedule-overview__counts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.schedule-overview__count {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+    line-height: 1.3;
+}
+
+.schedule-overview__count--waiting {
+    color: var(--color-warning);
+    background: var(--color-warning-soft);
+}
+
+.schedule-overview__count--scheduled {
+    color: var(--color-success);
+    background: var(--color-success-soft);
+}
+
+.schedule-overview__count--cancelled {
+    color: var(--color-critical);
+    background: var(--color-critical-soft);
+}
+
+.schedule-overview__progress {
+    display: block;
+    width: 100%;
+    height: 6px;
+    margin-top: 12px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-progress-track);
+    color: var(--color-primary);
+    accent-color: var(--color-primary);
+}
+
+.schedule-overview__progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: var(--color-progress-track);
+}
+
+.schedule-overview__progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--color-primary);
+}
+
+.schedule-overview__progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--color-primary);
+}
+
 .schedule-items {
-    margin-top: 24px;
-    padding-top: 22px;
-    border-top: 1px solid var(--color-border);
+    margin-top: 22px;
 }
 
 .schedule-items__heading,
@@ -966,7 +1098,7 @@ html:has(.agenda-dialog[open]) {
 
 .schedule-items__heading h3 {
     color: var(--color-text-primary);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 710;
     line-height: 1.4;
 }
@@ -974,8 +1106,8 @@ html:has(.agenda-dialog[open]) {
 .schedule-items__heading p {
     margin-top: 3px;
     color: var(--color-text-secondary);
-    font-size: 10px;
-    line-height: 1.45;
+    font-size: 11px;
+    line-height: 1.5;
 }
 
 .schedule-items__list {
@@ -985,11 +1117,13 @@ html:has(.agenda-dialog[open]) {
 }
 
 .schedule-service {
-    padding: 15px;
+    min-width: 0;
+    padding: 16px;
     border: 1px solid var(--color-border);
-    border-radius: 12px;
-    background: var(--color-surface-secondary);
-    transition: border-color 160ms ease, background 160ms ease;
+    border-radius: 13px;
+    background: var(--color-surface);
+    box-shadow: 0 5px 16px var(--color-shadow-card);
+    transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .schedule-service.is-preview-active {
@@ -1002,6 +1136,39 @@ html:has(.agenda-dialog[open]) {
     background: var(--color-critical-soft);
 }
 
+.schedule-service.is-incomplete {
+    border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+    background: color-mix(in srgb, var(--color-warning-soft) 36%, var(--color-surface));
+}
+
+.schedule-service.is-ready {
+    border-color: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
+}
+
+.schedule-service__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 11px;
+}
+
+.schedule-service__identity > div {
+    min-width: 0;
+}
+
+.schedule-service__order {
+    display: grid;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border-radius: 9px;
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+    font-size: 11px;
+    font-weight: 760;
+}
+
 .schedule-service__header strong,
 .schedule-service__header span {
     display: block;
@@ -1012,7 +1179,7 @@ html:has(.agenda-dialog[open]) {
 
 .schedule-service__header strong {
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 690;
     line-height: 1.4;
 }
@@ -1020,16 +1187,26 @@ html:has(.agenda-dialog[open]) {
 .schedule-service__header span {
     margin-top: 2px;
     color: var(--color-text-secondary);
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.4;
+}
+
+.schedule-service__identity > .schedule-service__order {
+    display: grid;
+    margin-top: 0;
+    place-items: center;
+    color: var(--color-primary);
+    font-size: 11px;
+    line-height: 1;
+    white-space: normal;
 }
 
 .schedule-service__controls {
     display: grid;
-    grid-template-columns: repeat(2, minmax(150px, 1fr)) auto;
+    grid-template-columns: repeat(3, minmax(135px, 1fr)) auto;
     gap: 12px;
     align-items: end;
-    margin-top: 14px;
+    margin-top: 16px;
 }
 
 .schedule-service__cancel {
@@ -1070,7 +1247,8 @@ html:has(.agenda-dialog[open]) {
     color: var(--color-critical);
 }
 
-.schedule-service .agenda-dialog__field input:disabled {
+.schedule-service .agenda-dialog__field input:disabled,
+.schedule-service .agenda-dialog__field select:disabled {
     cursor: not-allowed;
     color: var(--color-text-disabled);
     background: var(--color-surface-secondary);
@@ -1110,8 +1288,47 @@ html:has(.agenda-dialog[open]) {
     display: block;
     margin-bottom: 7px;
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 650;
+}
+
+.agenda-dialog__field label > i {
+    margin-right: 5px;
+    color: var(--color-primary);
+}
+
+.agenda-dialog__optional {
+    margin-left: 5px;
+    color: var(--color-text-disabled);
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.agenda-dialog__field-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.schedule-service__hint {
+    margin-top: 10px !important;
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.schedule-service.is-incomplete .schedule-service__hint {
+    color: var(--color-warning);
+    font-weight: 620;
+}
+
+.schedule-service.is-ready .schedule-service__hint {
+    color: var(--color-success);
+    font-weight: 620;
 }
 
 .agenda-dialog__field textarea {
@@ -1151,6 +1368,13 @@ html:has(.agenda-dialog[open]) {
     gap: 11px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--color-border);
+}
+
+.schedule-preview__hint {
+    margin-top: 12px !important;
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    line-height: 1.5;
 }
 
 .schedule-preview__icon {
@@ -1317,10 +1541,38 @@ html:has(.agenda-dialog[open]) {
 
 .agenda-dialog__footer {
     flex: 0 0 auto;
-    justify-content: flex-end;
-    padding: 18px 24px;
+    align-items: center;
+    padding: 15px 24px;
     border-top: 1px solid var(--color-border);
     background: var(--color-surface-secondary);
+    box-shadow: 0 -8px 22px var(--color-shadow-card);
+}
+
+.agenda-dialog__footer-summary {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+.agenda-dialog__footer-summary i {
+    color: var(--color-primary);
+}
+
+.agenda-dialog__footer-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.agenda-dialog__footer .agenda-button {
+    min-height: 44px;
 }
 
 .appointment-status-row {
@@ -1483,6 +1735,16 @@ html:has(.agenda-dialog[open]) {
         padding: 16px;
     }
 
+    .schedule-overview__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .schedule-overview__counts {
+        justify-content: flex-start;
+    }
+
     .schedule-service__controls {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1527,10 +1789,39 @@ html:has(.agenda-dialog[open]) {
     }
 
     .agenda-dialog__footer {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .agenda-dialog__footer-summary {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .agenda-dialog__footer-actions {
+        align-items: stretch;
         flex-direction: column-reverse;
     }
 
-    .agenda-dialog__footer .agenda-button {
+    .agenda-dialog__footer-actions .agenda-button {
         width: 100%;
+    }
+
+    .schedule-service__header {
+        align-items: flex-start;
+    }
+
+    .schedule-service__identity strong {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+    }
+
+    .schedule-service__header > .status-badge {
+        flex: 0 0 auto;
+        max-width: 45%;
+        text-align: center;
+        white-space: normal;
     }
 }

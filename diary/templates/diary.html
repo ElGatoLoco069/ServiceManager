@@ -230,8 +230,9 @@
         <header class="agenda-dialog__header">
             <span class="agenda-dialog__icon" aria-hidden="true"><i class="fa-regular fa-calendar-plus"></i></span>
             <div class="agenda-dialog__intro">
+                <span class="agenda-dialog__eyebrow">Novo agendamento</span>
                 <h2 id="schedule-dialog-title" tabindex="-1">Agendar Solicitação</h2>
-                <p id="schedule-dialog-description">Informe data e horário somente nos itens que deseja agendar.</p>
+                <p id="schedule-dialog-description">Organize cada serviço e confira a disponibilidade antes de confirmar.</p>
             </div>
             <button class="agenda-dialog__close" type="button" data-schedule-close aria-label="Fechar modal de agendamento" title="Fechar">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
@@ -242,20 +243,59 @@
             data-schedule-action-template="{% url 'schedule_request_service' service_request_id='REQUEST_ID' %}">
             {% csrf_token %}
             <input type="hidden" name="schedule_items" value="" data-schedule-payload>
+            <template data-schedule-operator-options>
+                <option value="">Selecione um operador</option>
+                {% for operator in context.operators %}
+                <option value="{{ operator.user.pk }}">
+                    {{ operator.user.get_full_name|default:operator.user.username }}
+                </option>
+                {% empty %}
+                <option value="" disabled>Nenhum operador disponível</option>
+                {% endfor %}
+            </template>
 
             <div class="agenda-dialog__body">
                 <div class="schedule-dialog__layout">
                     <div class="schedule-dialog__main">
                         <dl class="agenda-dialog__summary">
-                            <div><dt>Solicitação</dt><dd data-schedule-detail="protocol">—</dd></div>
-                            <div><dt>Solicitante</dt><dd data-schedule-detail="requester">—</dd></div>
+                            <div>
+                                <dt><i class="fa-solid fa-hashtag" aria-hidden="true"></i> Solicitação</dt>
+                                <dd data-schedule-detail="protocol">—</dd>
+                            </div>
+                            <div>
+                                <dt><i class="fa-regular fa-user" aria-hidden="true"></i> Solicitante</dt>
+                                <dd data-schedule-detail="requester">—</dd>
+                            </div>
                         </dl>
+
+                        <section class="schedule-overview" aria-label="Resumo do agendamento" aria-live="polite">
+                            <div class="schedule-overview__header">
+                                <div>
+                                    <span>Progresso</span>
+                                    <strong><span data-schedule-ready-count>0</span> de <span data-schedule-total-count>0</span> serviços definidos</strong>
+                                </div>
+                                <div class="schedule-overview__counts" aria-label="Situação dos serviços">
+                                    <span class="schedule-overview__count schedule-overview__count--waiting">
+                                        <strong data-schedule-pending-count>0</strong> a programar
+                                    </span>
+                                    <span class="schedule-overview__count schedule-overview__count--scheduled">
+                                        <strong data-schedule-scheduled-count>0</strong> prontos
+                                    </span>
+                                    <span class="schedule-overview__count schedule-overview__count--cancelled" data-schedule-cancelled-summary hidden>
+                                        <strong data-schedule-cancelled-count>0</strong> cancelados
+                                    </span>
+                                </div>
+                            </div>
+                            <progress class="schedule-overview__progress" value="0" max="1" data-schedule-progress>
+                                0% concluído
+                            </progress>
+                        </section>
 
                         <section class="schedule-items" aria-labelledby="schedule-items-title">
                             <header class="schedule-items__heading">
                                 <div>
                                     <h3 id="schedule-items-title">Serviços e programação</h3>
-                                    <p>Data e horário são opcionais, mas devem ser preenchidos juntos.</p>
+                                    <p>Informe operador, data e horário nos serviços que serão executados.</p>
                                 </div>
                                 <span class="agenda-count" data-schedule-item-count>0 itens</span>
                             </header>
@@ -267,11 +307,15 @@
 
                         <div class="agenda-dialog__fields agenda-dialog__fields--notes">
                             <div class="agenda-dialog__field agenda-dialog__field--wide">
-                                <label for="schedule-notes">Observações</label>
+                                <label for="schedule-notes">
+                                    <i class="fa-regular fa-note-sticky" aria-hidden="true"></i>
+                                    Observações <span class="agenda-dialog__optional">Opcional</span>
+                                </label>
                                 <textarea id="schedule-notes" name="notes" rows="4" placeholder="Inclua uma orientação para o agendamento, se necessário."></textarea>
+                                <span class="agenda-dialog__field-help">Use este espaço para registrar orientações importantes para a execução.</span>
                             </div>
                         </div>
-                        <p class="agenda-dialog__notice"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Ao confirmar, os dados serão enviados ao agendamento por POST.</p>
+                        <p class="agenda-dialog__notice"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Serviços sem programação permanecerão aguardando agendamento.</p>
                     </div>
 
                     <aside class="schedule-preview" aria-labelledby="schedule-preview-title">
@@ -280,10 +324,12 @@
                                 <i class="fa-solid fa-calendar-days"></i>
                             </span>
                             <div>
-                                <h3 id="schedule-preview-title">Agenda do dia</h3>
+                                <h3 id="schedule-preview-title">Disponibilidade do dia</h3>
                                 <time data-schedule-preview-date>Selecione uma data</time>
                             </div>
                         </header>
+
+                        <p class="schedule-preview__hint">Selecione um serviço para comparar o horário com os demais agendamentos.</p>
 
                         <div class="schedule-preview__selection" data-schedule-preview-selection hidden>
                             <span><i class="fa-regular fa-clock" aria-hidden="true"></i> Horário selecionado</span>
@@ -312,10 +358,16 @@
             </div>
 
             <footer class="agenda-dialog__footer">
-                <button class="agenda-button" type="button" data-schedule-close>Cancelar</button>
-                <button class="agenda-button agenda-button--primary" type="submit" data-schedule-confirm>
-                    <i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Confirmar agendamento
-                </button>
+                <div class="agenda-dialog__footer-summary" data-schedule-footer-summary aria-live="polite">
+                    <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                    <span>Nenhum serviço definido</span>
+                </div>
+                <div class="agenda-dialog__footer-actions">
+                    <button class="agenda-button" type="button" data-schedule-close>Voltar</button>
+                    <button class="agenda-button agenda-button--primary" type="submit" data-schedule-confirm>
+                        <i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Confirmar agendamento
+                    </button>
+                </div>
             </footer>
         </form>
     </dialog>

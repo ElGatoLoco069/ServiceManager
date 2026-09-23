@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/operator_tasks.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<title>Minhas tarefas | Service Manager</title>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/operator_tasks.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="operator-tasks" data-operator-tasks>
+    <header class="operator-tasks__header">
+        <div class="operator-tasks__intro">
+            <span class="operator-tasks__eyebrow">
+                <i class="fa-solid fa-helmet-safety" aria-hidden="true"></i>
+                Rotina de campo
+            </span>
+            <h1>Minhas tarefas</h1>
+            <p class="operator-tasks__greeting">
+                <span data-greeting-period>Bom dia</span>,
+                <strong>{{ request.user.first_name|default:request.user.username|default:"operador" }}</strong>
+            </p>
+        </div>
+
+        <section class="today-summary" aria-labelledby="today-summary-title">
+            <div class="today-summary__heading">
+                <span class="today-summary__icon" aria-hidden="true">
+                    <i class="fa-regular fa-calendar-check"></i>
+                </span>
+                <div>
+                    <h2 id="today-summary-title">Seus serviços de hoje</h2>
+                    <p><time data-today-date datetime="{% now 'Y-m-d' %}">{% now "d/m/Y" %}</time></p>
+                </div>
+            </div>
+            <div class="today-summary__indicators" aria-label="Resumo das tarefas de hoje">
+                <span class="today-indicator">
+                    <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                    <strong data-today-task-count>0</strong>
+                    <span data-today-task-label>serviços</span>
+                </span>
+                <span class="today-indicator today-indicator--progress">
+                    <i class="fa-solid fa-person-digging" aria-hidden="true"></i>
+                    <strong data-progress-task-count>0</strong>
+                    <span>em andamento</span>
+                </span>
+            </div>
+        </section>
+    </header>
+
+    <section class="operator-tasks__content" aria-labelledby="task-list-title">
+        <header class="task-list-heading">
+            <div>
+                <h2 id="task-list-title">Serviços atribuídos</h2>
+                <p>Priorize o serviço em andamento e confira os próximos horários.</p>
+            </div>
+        </header>
+
+        <div class="task-filters" aria-label="Filtrar tarefas por situação">
+            <div class="task-filters__scroller">
+                <button class="task-filter is-active" type="button" data-task-filter="all"
+                    aria-pressed="true">Todos</button>
+                <button class="task-filter" type="button" data-task-filter="pending"
+                    aria-pressed="false">Pendentes</button>
+                <button class="task-filter" type="button" data-task-filter="scheduled"
+                    aria-pressed="false">Agendados</button>
+                <button class="task-filter" type="button" data-task-filter="in_progress"
+                    aria-pressed="false">Em andamento</button>
+                <button class="task-filter" type="button" data-task-filter="completed"
+                    aria-pressed="false">Concluídos</button>
+                <button class="task-filter" type="button" data-task-filter="canceled"
+                    aria-pressed="false">Cancelados</button>
+            </div>
+        </div>
+
+        <p class="operator-tasks__sr-only" role="status" aria-live="polite" aria-atomic="true"
+            data-task-filter-summary>Lista de tarefas carregada.</p>
+
+        <div class="task-list" role="list" data-task-list>
+            {% for item in context.my_tasks %}
+            <article class="task-card{% if item.status == 'in_progress' %} task-card--progress{% endif %}"
+                role="listitem" data-task-card data-task-status="{{ item.status }}"
+                data-task-date="{% if item.scheduled_for %}{{ item.scheduled_for|date:'Y-m-d' }}{% endif %}"
+                aria-labelledby="task-title-{{ item.public_id }}">
+                <header class="task-card__header">
+                    <div class="task-card__title-group">
+                        <h3 id="task-title-{{ item.public_id }}">{{ item.service }}</h3>
+                        <p>Protocolo #{{ item.service_request.protocol }}</p>
+                    </div>
+                    <span class="task-status task-status--{% if item.status == 'in_progress' %}progress{% else %}{{ item.status }}{% endif %}">
+                        {% if item.status == 'completed' %}
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                        {% elif item.status == 'canceled' %}
+                        <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
+                        {% elif item.status == 'pending' %}
+                        <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                        {% else %}
+                        <i class="fa-solid fa-circle" aria-hidden="true"></i>
+                        {% endif %}
+                        {{ item.get_status_display }}
+                    </span>
+                </header>
+                <dl class="task-card__details">
+                    <div class="task-detail task-detail--address">
+                        <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i><span>Endereço</span></dt>
+                        <dd>
+                            {{ item.service_request.service_address }}{% if item.service_request.service_number %},
+                            {{ item.service_request.service_number }}{% endif %}{% if item.service_request.service_neighborhood %}
+                            - {{ item.service_request.service_neighborhood }}{% endif %}
+                        </dd>
+                    </div>
+                    <div class="task-detail">
+                        <dt><i class="fa-solid fa-clock" aria-hidden="true"></i><span>Data e horário</span></dt>
+                        <dd>
+                            {% if item.scheduled_for %}
+                            <time datetime="{{ item.scheduled_for|date:'c' }}">
+                                {{ item.scheduled_for|date:"d/m/Y" }} <span aria-hidden="true">•</span>
+                                {{ item.scheduled_for|time:"H:i" }}
+                            </time>
+                            {% else %}
+                            Sem agendamento
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="task-detail">
+                        <dt><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i><span>Quantidade</span></dt>
+                        <dd>{{ item.amount|floatformat:"-2" }} {{ item.unit|default:"un." }}</dd>
+                    </div>
+                </dl>
+                <footer class="task-card__footer">
+                    <button class="task-action" type="button" data-task-details-open
+                        data-task-start-url="{% url 'start_task' item.public_id %}"
+                        data-task-finish-url="{% url 'finish_task' item.public_id %}"
+                        data-task-start-status="{{ item.status }}"
+                        data-task-service="{{ item.service }}"
+                        data-task-protocol="{{ item.service_request.protocol }}"
+                        aria-haspopup="dialog" aria-controls="task-details-dialog">
+                        Ver serviço
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </footer>
+
+                <template data-task-details>
+                    <div class="task-modal__summary">
+                        <div class="task-modal__summary-copy">
+                            <span>Serviço atribuído</span>
+                            <h3>{{ item.service }}</h3>
+                            <p>Protocolo #{{ item.service_request.protocol }}</p>
+                        </div>
+                        <span class="task-status task-status--{% if item.status == 'in_progress' %}progress{% else %}{{ item.status }}{% endif %}">
+                            {% if item.status == 'completed' %}
+                            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                            {% elif item.status == 'canceled' %}
+                            <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
+                            {% elif item.status == 'pending' %}
+                            <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                            {% else %}
+                            <i class="fa-solid fa-circle" aria-hidden="true"></i>
+                            {% endif %}
+                            {{ item.get_status_display }}
+                        </span>
+                    </div>
+
+                    <div class="task-modal__sections">
+                        <section class="task-modal__section">
+                            <header class="task-modal__section-heading">
+                                <span aria-hidden="true"><i class="fa-regular fa-user"></i></span>
+                                <h3>Solicitante</h3>
+                            </header>
+                            <dl class="task-modal__details">
+                                <div>
+                                    <dt>Nome</dt>
+                                    <dd>{{ item.service_request.requester_name }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Telefone</dt>
+                                    <dd>{{ item.service_request.requester_phone }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Documento</dt>
+                                    <dd>{{ item.service_request.requester_document|default:"Não informado" }}</dd>
+                                </div>
+                                <div>
+                                    <dt>E-mail</dt>
+                                    <dd>{{ item.service_request.requester_email|default:"Não informado" }}</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="task-modal__section">
+                            <header class="task-modal__section-heading">
+                                <span aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+                                <h3>Atendimento</h3>
+                            </header>
+                            <dl class="task-modal__details">
+                                <div>
+                                    <dt>Status da solicitação</dt>
+                                    <dd>{{ item.service_request.get_status_display }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Quantidade</dt>
+                                    <dd>{{ item.amount|floatformat:"-2" }} {{ item.unit|default:"un." }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Agendamento</dt>
+                                    <dd>
+                                        {% if item.scheduled_for %}
+                                        <time datetime="{{ item.scheduled_for|date:'c' }}">
+                                            {{ item.scheduled_for|date:"d/m/Y" }} às {{ item.scheduled_for|time:"H:i" }}
+                                        </time>
+                                        {% else %}
+                                        Sem agendamento
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Solicitação criada em</dt>
+                                    <dd>
+                                        <time datetime="{{ item.service_request.created_at|date:'c' }}">
+                                            {{ item.service_request.created_at|date:"d/m/Y" }} às
+                                            {{ item.service_request.created_at|time:"H:i" }}
+                                        </time>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Início da tarefa</dt>
+                                    <dd>
+                                        {% if item.started_at %}
+                                        <time datetime="{{ item.started_at|date:'c' }}">
+                                            {{ item.started_at|date:"d/m/Y" }} às {{ item.started_at|time:"H:i" }}
+                                        </time>
+                                        {% else %}
+                                        Ainda não iniciada
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Conclusão da tarefa</dt>
+                                    <dd>
+                                        {% if item.finished_at %}
+                                        <time datetime="{{ item.finished_at|date:'c' }}">
+                                            {{ item.finished_at|date:"d/m/Y" }} às {{ item.finished_at|time:"H:i" }}
+                                        </time>
+                                        {% else %}
+                                        Ainda não concluída
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="task-modal__section">
+                            <header class="task-modal__section-heading">
+                                <span aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
+                                <h3>Local do serviço</h3>
+                            </header>
+                            <dl class="task-modal__details">
+                                <div class="task-modal__detail--wide">
+                                    <dt>Endereço</dt>
+                                    <dd>
+                                        {{ item.service_request.service_address }}{% if item.service_request.service_number %},
+                                        {{ item.service_request.service_number }}{% endif %}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Bairro</dt>
+                                    <dd>{{ item.service_request.service_neighborhood }}</dd>
+                                </div>
+                                <div>
+                                    <dt>CEP</dt>
+                                    <dd>{{ item.service_request.service_postal_code|default:"Não informado" }}</dd>
+                                </div>
+                                <div class="task-modal__detail--wide">
+                                    <dt>Ponto de referência</dt>
+                                    <dd>{{ item.service_request.service_landmark|default:"Não informado" }}</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="task-modal__section task-modal__section--notes">
+                            <header class="task-modal__section-heading">
+                                <span aria-hidden="true"><i class="fa-regular fa-note-sticky"></i></span>
+                                <h3>Observações</h3>
+                            </header>
+                            <p>{{ item.service_request.notes|default:"Nenhuma observação informada." }}</p>
+                        </section>
+                    </div>
+                </template>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="tasks-empty" role="status" data-task-empty{% if context.my_tasks %} hidden{% endif %}>
+            <span class="tasks-empty__icon" aria-hidden="true">
+                <i class="fa-regular fa-clipboard"></i>
+            </span>
+            <strong data-task-empty-title>Nenhuma tarefa atribuída</strong>
+            <p data-task-empty-description>Não há serviços designados para você no momento.</p>
+        </div>
+
+        <noscript>
+            <p class="operator-tasks__noscript">
+                Os serviços continuam visíveis, mas os filtros precisam do JavaScript para funcionar.
+            </p>
+        </noscript>
+    </section>
+</div>
+
+<dialog class="task-modal" id="task-details-dialog" data-task-dialog
+    aria-labelledby="task-modal-title" aria-describedby="task-modal-description">
+    <header class="task-modal__header">
+        <span class="task-modal__icon" aria-hidden="true">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+        </span>
+        <div class="task-modal__intro">
+            <h2 id="task-modal-title" tabindex="-1" data-task-dialog-title>Detalhes do serviço</h2>
+            <p id="task-modal-description">Confira as informações da solicitação atribuída.</p>
+        </div>
+        <button class="task-modal__close" type="button" data-task-dialog-close
+            aria-label="Fechar detalhes do serviço" title="Fechar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </header>
+
+    <div class="task-modal__body" data-task-dialog-body></div>
+
+    <p class="task-modal__feedback" data-task-dialog-feedback role="status" aria-live="polite" hidden></p>
+
+    <footer class="task-modal__footer">
+        <div class="task-modal__visual-note">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <span>Ver localização permanece apenas visual por enquanto.</span>
+        </div>
+        <div class="task-modal__actions">
+            <button class="task-modal__button" type="button" data-task-visual-action="location">
+                <i class="fa-solid fa-location-arrow" aria-hidden="true"></i>
+                Ver localização
+            </button>
+            <form class="task-modal__start-form" method="post" data-task-start-form>
+                {% csrf_token %}
+                <button class="task-modal__button task-modal__button--primary" type="submit"
+                    data-task-start-submit>
+                    <i class="fa-solid fa-play" aria-hidden="true"></i>
+                    <span data-task-start-label>Iniciar tarefa</span>
+                </button>
+            </form>
+            <button class="task-modal__button task-modal__button--primary" type="button"
+                data-task-complete-open hidden>
+                <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>
+                Concluir tarefa
+            </button>
+        </div>
+    </footer>
+</dialog>
+
+<dialog class="task-modal task-completion-modal" id="task-completion-dialog"
+    data-task-completion-dialog aria-labelledby="task-completion-title"
+    aria-describedby="task-completion-description">
+    <form class="task-completion__submit-form" id="task-completion-form" method="post"
+        enctype="multipart/form-data" data-task-completion-form>
+        {% csrf_token %}
+    </form>
+
+    <header class="task-modal__header">
+        <span class="task-modal__icon" aria-hidden="true">
+            <i class="fa-solid fa-camera"></i>
+        </span>
+        <div class="task-modal__intro">
+            <h2 id="task-completion-title" tabindex="-1" data-task-completion-title>Concluir tarefa</h2>
+            <p id="task-completion-description">Adicione uma foto para registrar visualmente a conclusão.</p>
+        </div>
+        <button class="task-modal__close" type="button" data-task-completion-close
+            aria-label="Fechar conclusão da tarefa" title="Fechar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </header>
+
+    <div class="task-modal__body task-completion__body">
+        <div class="task-completion__context">
+            <span>Tarefa selecionada</span>
+            <strong data-task-completion-service>Serviço</strong>
+            <small data-task-completion-protocol>Protocolo</small>
+        </div>
+
+        <section class="task-completion__upload" aria-labelledby="task-completion-photo-title">
+            <div class="task-completion__upload-heading">
+                <span aria-hidden="true"><i class="fa-regular fa-image"></i></span>
+                <div>
+                    <h3 id="task-completion-photo-title">Foto da tarefa concluída</h3>
+                    <p>Escolha uma imagem para conferir a pré-visualização antes de concluir.</p>
+                </div>
+            </div>
+
+            <input class="operator-tasks__sr-only" id="task-completion-camera" type="file"
+                name="attachment" accept="image/*" capture="environment" form="task-completion-form"
+                data-task-completion-input data-task-completion-camera-input data-completion-source="Câmera"
+                aria-label="Tirar foto da tarefa concluída" hidden>
+            <input class="operator-tasks__sr-only" id="task-completion-gallery" type="file"
+                name="attachment" accept="image/*" form="task-completion-form"
+                data-task-completion-input data-task-completion-gallery-input data-completion-source="Galeria"
+                aria-label="Escolher foto da galeria" hidden>
+
+            <div class="task-completion__empty" data-task-completion-empty>
+                <span class="task-completion__empty-icon" aria-hidden="true">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </span>
+                <strong>Nenhuma foto selecionada</strong>
+                <p>Tire uma foto agora ou escolha uma imagem já salva.</p>
+                <div class="task-completion__source-actions" role="group" aria-label="Origem da foto">
+                    <button class="task-completion__source-button" type="button" data-task-completion-camera>
+                        <span aria-hidden="true"><i class="fa-solid fa-camera"></i></span>
+                        <span>
+                            <strong>Tirar foto</strong>
+                            <small>Usar a câmera agora</small>
+                        </span>
+                    </button>
+                    <button class="task-completion__source-button" type="button" data-task-completion-gallery>
+                        <span aria-hidden="true"><i class="fa-regular fa-images"></i></span>
+                        <span>
+                            <strong>Galeria</strong>
+                            <small>Escolher uma imagem salva</small>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="task-completion__preview" data-task-completion-preview hidden>
+                <div class="task-completion__image-frame">
+                    <img alt="Pré-visualização da foto selecionada" data-task-completion-image>
+                </div>
+                <div class="task-completion__file">
+                    <span aria-hidden="true"><i class="fa-solid fa-file-image"></i></span>
+                    <div>
+                        <strong data-task-completion-file-name></strong>
+                        <small data-task-completion-file-size></small>
+                    </div>
+                    <button type="button" data-task-completion-remove
+                        aria-label="Remover foto selecionada" title="Remover foto">
+                        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <p class="task-modal__feedback" data-task-completion-feedback role="status"
+        aria-live="polite" hidden></p>
+
+    <footer class="task-modal__footer">
+        <div class="task-modal__visual-note">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <span>A foto será enviada ao concluir a tarefa.</span>
+        </div>
+        <div class="task-modal__actions task-completion__actions">
+            <button class="task-modal__button" type="button" data-task-completion-close>Cancelar</button>
+            <button class="task-modal__button task-modal__button--primary" type="submit"
+                form="task-completion-form" data-task-completion-confirm disabled>
+                <i class="fa-solid fa-check" aria-hidden="true"></i>
+                <span data-task-completion-confirm-label>Concluir tarefa</span>
+            </button>
+        </div>
+    </footer>
+</dialog>
+{% endblock %}

@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 
 from accounts.views import AuthenticationView, logout_view, UserProfileView
 from dashboard.views import HomeView
@@ -23,6 +25,8 @@ from dashboard.views import HomeView
 from registers.views import ListServiceTypeView, CreateServiceTypeView, UpdateServiceTypeView
 from diary.views import DiaryView, ScheduleServiceItemView
 from service_request.views import CreateServiceRequestView, ServiceRequestFormView, SearchProtocolView, ProtocolDetailView
+
+from field_operator.views import OperatorView, StartServiceView, FinishServiceView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -45,5 +49,11 @@ urlpatterns = [
     path("protocol/consult_protocol/", SearchProtocolView.as_view(), name="consult_protocol"),
     path("protocol/protocol_detail/", ProtocolDetailView.as_view(), name="protocol_detail"),
 
+    path("operator/list_task/", OperatorView.as_view(), name="list_task"),
+    path("opertor/start_task/<str:service_id>/", StartServiceView.as_view(), name="start_task"),
+    path("opertor/finish_task/<str:service_id>/", FinishServiceView.as_view(), name="finish_task"),
 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

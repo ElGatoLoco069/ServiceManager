@@ -190,6 +190,9 @@ class AuthenticationService:
             require_https=request.is_secure()
         )
 
+        if request.user.profile.profile_type == "operator" and not request.user.is_superuser:
+            return redirect("list_task")
+
         if is_safe:
             return redirect(next_url)
 

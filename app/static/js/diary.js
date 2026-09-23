@@ -36,7 +36,16 @@
     var scheduleItemsEmpty = scheduleDialog.querySelector("[data-schedule-items-empty]");
     var scheduleItemCount = scheduleDialog.querySelector("[data-schedule-item-count]");
     var schedulePayload = scheduleDialog.querySelector("[data-schedule-payload]");
+    var scheduleOperatorOptions = scheduleDialog.querySelector("[data-schedule-operator-options]");
     var scheduleConfirm = scheduleDialog.querySelector("[data-schedule-confirm]");
+    var scheduleReadyCount = scheduleDialog.querySelector("[data-schedule-ready-count]");
+    var scheduleTotalCount = scheduleDialog.querySelector("[data-schedule-total-count]");
+    var schedulePendingCount = scheduleDialog.querySelector("[data-schedule-pending-count]");
+    var scheduleScheduledCount = scheduleDialog.querySelector("[data-schedule-scheduled-count]");
+    var scheduleCancelledCount = scheduleDialog.querySelector("[data-schedule-cancelled-count]");
+    var scheduleCancelledSummary = scheduleDialog.querySelector("[data-schedule-cancelled-summary]");
+    var scheduleProgress = scheduleDialog.querySelector("[data-schedule-progress]");
+    var scheduleFooterSummary = scheduleDialog.querySelector("[data-schedule-footer-summary] span");
     var schedulePreviewDate = scheduleDialog.querySelector("[data-schedule-preview-date]");
     var schedulePreviewSelection = scheduleDialog.querySelector("[data-schedule-preview-selection]");
     var schedulePreviewSelectedTime = scheduleDialog.querySelector("[data-schedule-preview-selected-time]");
@@ -411,7 +420,10 @@
         field.className = "agenda-dialog__field";
         var label = document.createElement("label");
         label.htmlFor = id;
-        label.textContent = labelText;
+        var icon = document.createElement("i");
+        icon.className = type === "date" ? "fa-regular fa-calendar-days" : "fa-regular fa-clock";
+        icon.setAttribute("aria-hidden", "true");
+        label.append(icon, document.createTextNode(" " + labelText));
         var input = document.createElement("input");
         input.id = id;
         input.type = type;
@@ -436,26 +448,120 @@
         return field;
     }
 
+    function createScheduleOperatorField(id, itemId) {
+        var field = document.createElement("div");
+        field.className = "agenda-dialog__field agenda-dialog__field--operator";
+
+        var label = document.createElement("label");
+        label.htmlFor = id;
+        var icon = document.createElement("i");
+        icon.className = "fa-solid fa-user-gear";
+        icon.setAttribute("aria-hidden", "true");
+        label.append(icon, document.createTextNode(" Operador"));
+
+        var select = document.createElement("select");
+        select.id = id;
+        select.name = "operators";
+        select.dataset.scheduleOperator = "";
+        select.dataset.itemId = itemId || "";
+        select.appendChild(scheduleOperatorOptions.content.cloneNode(true));
+        select.addEventListener("change", function () {
+            var service = select.closest("[data-schedule-service]");
+            if (service) updateScheduleServiceStatus(service);
+        });
+
+        field.append(label, select);
+        return field;
+    }
+
+    function updateScheduleOverview() {
+        var services = Array.from(scheduleItems.querySelectorAll("[data-schedule-service]"));
+        var total = services.length;
+        var scheduled = services.filter(function (service) {
+            return service.dataset.status === "scheduled";
+        }).length;
+        var cancelled = services.filter(function (service) {
+            return service.dataset.status === "canceled";
+        }).length;
+        var pending = total - scheduled - cancelled;
+        var ready = scheduled + cancelled;
+
+        scheduleReadyCount.textContent = ready;
+        scheduleTotalCount.textContent = total;
+        schedulePendingCount.textContent = pending;
+        scheduleScheduledCount.textContent = scheduled;
+        scheduleCancelledCount.textContent = cancelled;
+        scheduleCancelledSummary.hidden = cancelled === 0;
+        scheduleProgress.max = Math.max(total, 1);
+        scheduleProgress.value = ready;
+        scheduleProgress.textContent = total ? Math.round((ready / total) * 100) + "% concluído" : "0% concluído";
+
+        if (!total || !ready) {
+            scheduleFooterSummary.textContent = "Nenhum serviço definido";
+        } else if (ready === total) {
+            scheduleFooterSummary.textContent = "Todos os serviços foram definidos";
+        } else {
+            scheduleFooterSummary.textContent = ready + " de " + total + " serviços definidos";
+        }
+    }
+
     function updateScheduleServiceStatus(service) {
         var dateInput = service.querySelector('[data-schedule-field="date"]');
         var timeInput = service.querySelector('[data-schedule-field="time"]');
+        var operatorSelect = service.querySelector("[data-schedule-operator]");
         var badge = service.querySelector("[data-schedule-service-status]");
+        var hint = service.querySelector("[data-schedule-service-hint]");
         var cancelled = service.classList.contains("is-cancelled");
+        var hasDate = Boolean(dateInput.value);
+        var hasTime = Boolean(timeInput.value);
+        var hasOperator = Boolean(operatorSelect.value);
+        var hasCompleteDateTime = hasDate && hasTime;
 
-        dateInput.required = !cancelled && Boolean(timeInput.value);
-        timeInput.required = !cancelled && Boolean(dateInput.value);
+        dateInput.required = !cancelled && hasTime;
+        timeInput.required = !cancelled && hasDate;
+        operatorSelect.required = !cancelled && hasCompleteDateTime;
+        service.classList.remove("is-incomplete", "is-ready");
 
         if (cancelled) {
             service.dataset.status = "canceled";
             badge.className = "status-badge status-badge--cancelled";
             badge.textContent = "Cancelado";
+            hint.textContent = "Este serviço será removido da programação ao confirmar.";
+            updateScheduleOverview();
             return;
         }
 
-        var scheduled = Boolean(dateInput.value && timeInput.value);
-        service.dataset.status = scheduled ? "scheduled" : "pending";
-        badge.className = "status-badge status-badge--" + (scheduled ? "scheduled" : "waiting");
-        badge.textContent = scheduled ? "Agendado" : "A programar";
+        if (hasDate !== hasTime) {
+            service.dataset.status = "pending";
+            service.classList.add("is-incomplete");
+            badge.className = "status-badge status-badge--waiting";
+            badge.textContent = "Complete data e horário";
+            hint.textContent = "Data e horário precisam ser preenchidos juntos.";
+        } else if (hasCompleteDateTime && !hasOperator) {
+            service.dataset.status = "pending";
+            service.classList.add("is-incomplete");
+            badge.className = "status-badge status-badge--waiting";
+            badge.textContent = "Escolha o operador";
+            hint.textContent = "Selecione quem será responsável por este serviço.";
+        } else if (hasCompleteDateTime && hasOperator) {
+            service.dataset.status = "scheduled";
+            service.classList.add("is-ready");
+            badge.className = "status-badge status-badge--completed";
+            badge.textContent = "Pronto";
+            hint.textContent = "Serviço pronto para confirmar.";
+        } else if (hasOperator) {
+            service.dataset.status = "pending";
+            service.classList.add("is-incomplete");
+            badge.className = "status-badge status-badge--waiting";
+            badge.textContent = "Informe data e horário";
+            hint.textContent = "Agora defina quando este serviço será executado.";
+        } else {
+            service.dataset.status = "pending";
+            badge.className = "status-badge status-badge--waiting";
+            badge.textContent = "A programar";
+            hint.textContent = "Preencha os campos para incluir este serviço no agendamento.";
+        }
+        updateScheduleOverview();
     }
 
     function setScheduleServiceCancelled(button, cancelled) {
@@ -463,12 +569,16 @@
         if (!service) return;
         var icon = button.querySelector("i");
         var label = button.querySelector("span");
+        var serviceName = service.querySelector(".schedule-service__identity strong");
         service.classList.toggle("is-cancelled", cancelled);
-        service.querySelectorAll("input").forEach(function (input) {
-            input.disabled = cancelled;
+        service.querySelectorAll("input, select").forEach(function (field) {
+            field.disabled = cancelled;
         });
         button.setAttribute("aria-pressed", String(cancelled));
-        button.setAttribute("aria-label", cancelled ? "Reativar item" : "Cancelar item");
+        button.setAttribute(
+            "aria-label",
+            (cancelled ? "Reativar " : "Cancelar ") + (serviceName ? serviceName.textContent : "item")
+        );
         icon.className = cancelled ? "fa-solid fa-rotate-left" : "fa-solid fa-ban";
         label.textContent = cancelled ? "Reativar item" : "Cancelar item";
         updateScheduleServiceStatus(service);
@@ -483,30 +593,38 @@
 
         var header = document.createElement("header");
         header.className = "schedule-service__header";
+        var identity = document.createElement("div");
+        identity.className = "schedule-service__identity";
+        var order = document.createElement("span");
+        order.className = "schedule-service__order";
+        order.textContent = index;
+        order.setAttribute("aria-hidden", "true");
         var description = document.createElement("div");
         var name = document.createElement("strong");
         name.textContent = item.name;
         var quantity = document.createElement("span");
         quantity.textContent = item.quantityLabel;
         description.append(name, quantity);
+        identity.append(order, description);
         var badge = document.createElement("span");
         badge.className = "status-badge status-badge--waiting";
         badge.dataset.scheduleServiceStatus = "";
         badge.textContent = "A programar";
-        header.append(description, badge);
+        header.append(identity, badge);
 
         var controls = document.createElement("div");
         controls.className = "schedule-service__controls";
         controls.append(
             createScheduleField("Data", "date", "schedule-item-date-" + index, item.scheduledDate),
-            createScheduleField("Horário", "time", "schedule-item-time-" + index, item.scheduledTime)
+            createScheduleField("Horário", "time", "schedule-item-time-" + index, item.scheduledTime),
+            createScheduleOperatorField("schedule-item-operator-" + index, item.itemId)
         );
         var cancelButton = document.createElement("button");
         cancelButton.type = "button";
         cancelButton.className = "schedule-service__cancel";
         cancelButton.dataset.scheduleItemCancel = "";
         cancelButton.setAttribute("aria-pressed", "false");
-        cancelButton.setAttribute("aria-label", "Cancelar item");
+        cancelButton.setAttribute("aria-label", "Cancelar " + item.name);
         var cancelIcon = document.createElement("i");
         cancelIcon.className = "fa-solid fa-ban";
         cancelIcon.setAttribute("aria-hidden", "true");
@@ -515,7 +633,15 @@
         cancelButton.append(cancelIcon, cancelLabel);
         controls.appendChild(cancelButton);
 
-        service.append(header, controls);
+        var hint = document.createElement("p");
+        hint.className = "schedule-service__hint";
+        hint.id = "schedule-item-hint-" + index;
+        hint.dataset.scheduleServiceHint = "";
+        controls.querySelectorAll("input, select").forEach(function (field) {
+            field.setAttribute("aria-describedby", hint.id);
+        });
+
+        service.append(header, controls, hint);
         if ((statusAliases[item.status] || item.status) === "cancelled") {
             setScheduleServiceCancelled(cancelButton, true);
         } else {
@@ -608,6 +734,7 @@
         services.forEach(function (item, index) {
             scheduleItems.appendChild(createScheduleService(item, index + 1));
         });
+        updateScheduleOverview();
         renderDaySchedulePreview(scheduleItems.querySelector("[data-schedule-service]"));
     }
 
@@ -616,12 +743,14 @@
             var status = service.dataset.status || "pending";
             var dateInput = service.querySelector('[data-schedule-field="date"]');
             var timeInput = service.querySelector('[data-schedule-field="time"]');
+            var operatorSelect = service.querySelector("[data-schedule-operator]");
             var scheduled = status === "scheduled";
             return [
                 service.dataset.itemId || "",
                 scheduled ? dateInput.value : null,
                 scheduled ? timeInput.value : null,
-                status
+                status,
+                operatorSelect && !operatorSelect.disabled ? (operatorSelect.value || null) : null
             ];
         });
     }
@@ -732,6 +861,7 @@
         scheduleItemCount.textContent = "0 itens";
         scheduleItemsEmpty.hidden = true;
         scheduleConfirm.disabled = true;
+        updateScheduleOverview();
         renderDaySchedulePreview(null);
         if (scheduleOpener && scheduleOpener.isConnected) scheduleOpener.focus();
         scheduleOpener = null;

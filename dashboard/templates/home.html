@@ -233,7 +233,7 @@
         <span class="schedule-modal__icon" aria-hidden="true"><i class="fa-regular fa-calendar-plus"></i></span>
         <div class="schedule-modal__intro">
             <h2 id="dashboard-schedule-title" tabindex="-1" data-dashboard-schedule-title>Agendar solicitação</h2>
-            <p id="dashboard-schedule-description">Informe a data e o horário dos serviços que deseja agendar.</p>
+            <p id="dashboard-schedule-description">Selecione o operador, a data e o horário de cada serviço.</p>
         </div>
         <button class="schedule-modal__close" type="button" data-dashboard-schedule-close
             aria-label="Fechar agendamento" title="Fechar">
@@ -246,6 +246,16 @@
         {% csrf_token %}
         <input type="hidden" name="schedule_items" value="" data-dashboard-schedule-payload>
         <input type="hidden" name="return_to" value="home">
+        <template data-dashboard-schedule-operator-options>
+            <option value="">Selecione um operador</option>
+            {% for operator in context.operators %}
+            <option value="{{ operator.user.pk }}">
+                {{ operator.user.get_full_name|default:operator.user.username }}
+            </option>
+            {% empty %}
+            <option value="" disabled>Nenhum operador disponível</option>
+            {% endfor %}
+        </template>
 
         <div class="schedule-modal__body">
             <div class="schedule-modal__layout">
@@ -259,7 +269,7 @@
                         <header class="schedule-modal__services-heading">
                             <div>
                                 <h3 id="dashboard-schedule-services-title">Serviços e programação</h3>
-                                <p>Preencha data e horário juntos em pelo menos um serviço.</p>
+                                <p>Defina o operador de cada item e preencha data e horário juntos.</p>
                             </div>
                             <span class="dashboard-count" data-dashboard-schedule-count>0 itens</span>
                         </header>

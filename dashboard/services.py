@@ -2,7 +2,7 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from service_request.models import ServiceRequest, ServiceRequestItem
-
+from field_operator.services.operator import get_all_operators
 
 class DashboardService:
 
@@ -57,6 +57,7 @@ class DashboardService:
             ).count(),
             "recent_requests": recent_requests,
             "recent_requests_count": len(recent_requests),
+            "operators":get_all_operators(),
         }
 
         return context

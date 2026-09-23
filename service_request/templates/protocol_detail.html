@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{% static 'css/protocol_detail.css' %}">
     <link rel="shortcut icon" href="{% static 'images/logo.svg' %}" type="image/x-icon">
     <script src="{% static 'notifications/toast.js' %}" defer></script>
+    <script src="{% static 'js/protocol_detail.js' %}" defer></script>
 </head>
 
 <body class="protocol-page protocol-detail-page">
@@ -175,6 +176,46 @@
                                     </dd>
                                 </div>
                             </dl>
+
+                            {% if item.status == 'completed' %}
+                                {% with photos=item.photos.all %}
+                                    {% if photos %}
+                                        <div class="service-item__actions">
+                                            <button class="service-photo-button" type="button"
+                                                data-service-photo-open data-service-name="{{ item.service }}"
+                                                aria-haspopup="dialog" aria-controls="service-photo-dialog">
+                                                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                                                <span>{% if photos|length > 1 %}Ver imagens{% else %}Ver imagem{% endif %}</span>
+                                            </button>
+                                        </div>
+
+                                        <template data-service-photo-content>
+                                            <div class="service-photo-gallery">
+                                                {% for photo in photos %}
+                                                    <figure class="service-photo-gallery__item">
+                                                        <div class="service-photo-gallery__frame">
+                                                            <img src="{{ photo.image.url }}"
+                                                                alt="Registro de conclusão do serviço {{ item.service }}{% if photos|length > 1 %}, imagem {{ forloop.counter }}{% endif %}"
+                                                                loading="lazy" decoding="async">
+                                                        </div>
+                                                        <figcaption>
+                                                            <span>
+                                                                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                                                                Registro da conclusão
+                                                            </span>
+                                                            {% if photo.created_at %}
+                                                                <time datetime="{{ photo.created_at|date:'c' }}">
+                                                                    {{ photo.created_at|date:"d/m/Y" }} às {{ photo.created_at|date:"H:i" }}
+                                                                </time>
+                                                            {% endif %}
+                                                        </figcaption>
+                                                    </figure>
+                                                {% endfor %}
+                                            </div>
+                                        </template>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
                         </article>
                     {% empty %}
                         <div class="requested-services__empty" role="status">
@@ -208,6 +249,30 @@
             </div>
         </div>
     </main>
+
+    <dialog class="service-photo-modal" id="service-photo-dialog" data-service-photo-dialog
+        aria-labelledby="service-photo-modal-title" aria-describedby="service-photo-modal-description">
+        <header class="service-photo-modal__header">
+            <span class="service-photo-modal__icon" aria-hidden="true">
+                <i class="fa-regular fa-image"></i>
+            </span>
+            <div>
+                <p>Comprovante do atendimento</p>
+                <h2 id="service-photo-modal-title" tabindex="-1" data-service-photo-title>Imagem do serviço</h2>
+                <span id="service-photo-modal-description">Registro enviado na conclusão da tarefa.</span>
+            </div>
+            <button class="service-photo-modal__close" type="button" data-service-photo-close
+                aria-label="Fechar visualização da imagem" title="Fechar">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <div class="service-photo-modal__body" data-service-photo-body></div>
+
+        <footer class="service-photo-modal__footer">
+            <button class="service-photo-modal__button" type="button" data-service-photo-close>Fechar</button>
+        </footer>
+    </dialog>
 </body>
 
 </html>

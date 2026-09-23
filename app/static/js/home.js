@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var scheduleItems = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-items]");
     var scheduleCount = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-count]");
     var schedulePayload = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-payload]");
+    var scheduleOperatorOptions = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-operator-options]");
     var scheduleConfirm = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-confirm]");
     var scheduleNotice = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-notice]");
     var previewDate = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-preview-date]");
@@ -212,6 +213,28 @@ document.addEventListener("DOMContentLoaded", function () {
         return field;
     }
 
+    function createScheduleOperatorField(id, itemId) {
+        var field = document.createElement("div");
+        field.className = "schedule-modal__field schedule-modal__field--operator";
+
+        var label = document.createElement("label");
+        label.htmlFor = id;
+        var icon = document.createElement("i");
+        icon.className = "fa-solid fa-user-gear";
+        icon.setAttribute("aria-hidden", "true");
+        label.append(icon, document.createTextNode(" Operador"));
+
+        var select = document.createElement("select");
+        select.id = id;
+        select.name = "operators";
+        select.dataset.dashboardScheduleOperator = "";
+        select.dataset.itemId = itemId || "";
+        select.appendChild(scheduleOperatorOptions.content.cloneNode(true));
+
+        field.append(label, select);
+        return field;
+    }
+
     function createScheduleService(item, index) {
         var service = document.createElement("article");
         service.className = "schedule-modal__service";
@@ -238,7 +261,8 @@ document.addEventListener("DOMContentLoaded", function () {
         fields.className = "schedule-modal__fields";
         fields.append(
             createScheduleField("Data", "date", "dashboard-schedule-date-" + index),
-            createScheduleField("Horário", "time", "dashboard-schedule-time-" + index)
+            createScheduleField("Horário", "time", "dashboard-schedule-time-" + index),
+            createScheduleOperatorField("dashboard-schedule-operator-" + index, item.itemId)
         );
         service.append(header, fields);
         return service;
@@ -271,12 +295,14 @@ document.addEventListener("DOMContentLoaded", function () {
         return Array.from(scheduleItems.querySelectorAll("[data-dashboard-schedule-service]")).map(function (service) {
             var dateInput = service.querySelector('[data-dashboard-schedule-field="date"]');
             var timeInput = service.querySelector('[data-dashboard-schedule-field="time"]');
+            var operatorSelect = service.querySelector("[data-dashboard-schedule-operator]");
             var scheduled = service.dataset.status === "scheduled";
             return [
                 service.dataset.itemId || "",
                 scheduled ? dateInput.value : null,
                 scheduled ? timeInput.value : null,
-                scheduled ? "scheduled" : "pending"
+                scheduled ? "scheduled" : "pending",
+                operatorSelect ? (operatorSelect.value || null) : null
             ];
         });
     }

@@ -7,6 +7,8 @@ from service_request.services.service_request import ServiceRequestService
 from registers.services.registers import RegisterService
 from diary.services.diary_service import DiaryService
 
+from field_operator.services.operator import get_all_operators
+
 @method_decorator(login_required(login_url="/accounts/auth/"), name="dispatch")
 class DiaryView(View):
 
@@ -16,6 +18,7 @@ class DiaryView(View):
             "get_all":ServiceRequestService.get_all(),
             "get_awaiting_service_request":ServiceRequestService.get_awaiting_service_request(),
             "services":RegisterService.get_service_type(),
+            "operators":get_all_operators()
         }
 
         return render(request, "diary.html", {"context":context,})
