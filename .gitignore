@@ -50,3 +50,5 @@ dist/
 
 # Migrações compiladas
 **/migrations/*.pyc
+
+**/config/vapid/private_key.pem

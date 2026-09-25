@@ -10,12 +10,14 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/auto_refresh.js' %}" defer></script>
 <script src="{% static 'js/diary.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
 {% now "Y-m-d" as agenda_today_iso %}
-<div class="agenda-page" data-agenda-page data-agenda-today="{{ agenda_today_iso }}">
+<div class="agenda-page" data-agenda-page data-auto-refresh-minutes="15"
+    data-agenda-today="{{ agenda_today_iso }}">
     <header class="agenda-page__header">
         <div class="agenda-page__intro">
             <h1>Agenda de Serviços</h1>

@@ -197,6 +197,12 @@ class ServiceRequestItem(models.Model):
 
 class ServiceRequestItemPhoto(models.Model):
 
+    public_id = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
+
     service_request_item = models.ForeignKey(
         ServiceRequestItem,
         on_delete=models.CASCADE,

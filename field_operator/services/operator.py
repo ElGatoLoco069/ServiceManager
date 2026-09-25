@@ -6,6 +6,7 @@ from django.db import transaction
 
 from accounts.models import Profile
 from service_request.models import ServiceRequest, ServiceRequestItem, ServiceRequestItemPhoto
+from field_operator.services.attachment import save_attachments
 
 User = get_user_model()
 
@@ -131,15 +132,10 @@ def finish_service(request, service_id):
             )
             return redirect("list_task")
 
-        with transaction.atomic():
 
-            for attachment in attachments:
+        save_attachments(request, attachments, service.public_id)
 
-                ServiceRequestItemPhoto.objects.create(
-                    service_request_item=service,
-                    image=attachment,
-                    created_by=request.user,
-                )
+        if ServiceRequestItemPhoto.objects.filter(service_request_item=service).exists():
 
             service.status = ServiceRequestItem.Status.COMPLETED
             service.finished_at = timezone.now()
@@ -158,10 +154,10 @@ def finish_service(request, service_id):
                 service_request.updated_by = request.user
                 service_request.save()
 
-        messages.success(
-            request,
-            "Tarefa concluída com sucesso! Bom trabalho!"
-        )
+            messages.success(
+                request,
+                "Tarefa concluída com sucesso! Bom trabalho!"
+            )
 
         return redirect("list_task")
 
@@ -171,5 +167,5 @@ def finish_service(request, service_id):
             request,
             f"Erro ao tentar finalizar tarefa! Erro: {e}"
         )
-
+    
         return redirect("list_task")

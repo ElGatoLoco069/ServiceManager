@@ -11,6 +11,7 @@ from datetime import datetime
 import json
 
 from service_request.models import ServiceRequest, ServiceRequestItem
+from notifications.services.push_notification import PushNotificationService
 
 
 User = get_user_model()
@@ -27,309 +28,307 @@ class DiaryService:
         )
 
     @staticmethod
-    def get_operator(operator_value):
-        """
-        Localiza o operador recebido pelo frontend.
+    def get_operator(value):
 
-        Aceita:
-        - ID do usuário
-        - username do usuário
-        """
-
-        if not operator_value:
+        if not value:
             return None
 
-        operator_value = str(operator_value).strip()
+        value = str(value).strip()
 
-        # Primeiro tenta localizar pelo ID
-        if operator_value.isdigit():
-            operator = User.objects.filter(
-                pk=int(operator_value)
-            ).first()
+        # Procura primeiro pelo ID
+        if value.isdigit():
+            operator = User.objects.filter(pk=value).first()
 
             if operator:
                 return operator
 
-        # Caso não seja ID ou não encontre pelo ID,
-        # tenta localizar pelo username
+        # Caso contrário procura pelo username
         return User.objects.filter(
-            username=operator_value
+            username=value
         ).first()
 
     @staticmethod
-    def verify_schedule(request):
+    def get_schedule_items(request):
 
-        try:
-            errors = []
+        items = json.loads(
+            request.POST.get("schedule_items", "[]")
+        )
 
-            items = json.loads(
-                request.POST.get("schedule_items", "[]")
+        if not items:
+            raise ValueError(
+                "Nenhum item foi encontrado para agendar!"
             )
 
-            if not items:
-                messages.warning(
-                    request,
-                    "Nenhum item foi encontrado para agendar!"
-                )
-                return None
-
-            for item_data in items:
-
-                if len(item_data) != 5:
-                    errors.append(
-                        "Foi encontrado um item de agendamento inválido."
-                    )
-                    continue
-
-                item_id, date_value, time_value, status, operator_value = item_data
-
-                item = ServiceRequestItem.objects.filter(
-                    public_id=item_id
-                ).first()
-
-                if not item:
-                    errors.append(
-                        "Um dos serviços informados não foi encontrado."
-                    )
-                    continue
-
-                # Item cancelado não precisa de data, hora ou operador
-                if status == "canceled":
-                    continue
-
-                if date_value and not time_value:
-                    errors.append(
-                        f"É necessário informar o horário "
-                        f"para o serviço {item.service}."
-                    )
-
-                if time_value and not date_value:
-                    errors.append(
-                        f"É necessário informar a data "
-                        f"para o serviço {item.service}."
-                    )
-
-                if date_value and time_value and not operator_value:
-                    errors.append(
-                        f"É necessário informar o operador responsável "
-                        f"pelo serviço {item.service}."
-                    )
-
-                if date_value and time_value and operator_value:
-
-                    operator_user = DiaryService.get_operator(
-                        operator_value
-                    )
-
-                    if not operator_user:
-                        errors.append(
-                            f"O operador selecionado para o serviço "
-                            f"{item.service} não foi encontrado."
-                        )
-
-            return errors
-
-        except json.JSONDecodeError:
-            messages.error(
-                request,
-                "Os dados do agendamento são inválidos."
-            )
-            return None
-
-        except Exception as e:
-            messages.error(
-                request,
-                f"Erro ao realizar validação do agendamento! Erro: {e}"
-            )
-            return None
+        return items
 
     @staticmethod
-    @transaction.atomic
+    def get_scheduled_for(date_value, time_value):
+
+        scheduled_date = datetime_date.fromisoformat(
+            date_value
+        )
+
+        scheduled_time = datetime_time.fromisoformat(
+            time_value
+        )
+
+        scheduled_for = datetime.combine(
+            scheduled_date,
+            scheduled_time,
+        )
+
+        return timezone.make_aware(
+            scheduled_for,
+            timezone.get_current_timezone(),
+        )
+
+    @staticmethod
+    def validate_item(item, date_value, time_value, status, operator_value):
+
+        if status == "canceled":
+            return None
+
+        if date_value and not time_value:
+            raise ValueError(
+                f"É necessário informar o horário "
+                f"para o serviço {item.service}."
+            )
+
+        if time_value and not date_value:
+            raise ValueError(
+                f"É necessário informar a data "
+                f"para o serviço {item.service}."
+            )
+
+        if date_value and time_value and not operator_value:
+            raise ValueError(
+                f"É necessário informar o operador responsável "
+                f"pelo serviço {item.service}."
+            )
+
+        if not date_value and not time_value:
+            return None
+
+        operator = DiaryService.get_operator(
+            operator_value
+        )
+
+        if not operator:
+            raise ValueError(
+                f"Operador '{operator_value}' não encontrado."
+            )
+
+        return operator
+
+    @staticmethod
+    def notify_new_assignment(item, operator):
+
+        title = "Nova tarefa atribuída"
+
+        message = (
+            f"Você recebeu uma nova tarefa: "
+            f"{item.service}."
+        )
+
+        url = f"/operator/service/{item.public_id}/"
+
+        # Só envia depois que a transação for confirmada.
+        transaction.on_commit(
+            lambda: PushNotificationService.send_to_user(
+                user=operator,
+                title=title,
+                message=message,
+                url=url,
+                tag=f"service-{item.public_id}",
+            )
+        )
+
+    @staticmethod
+    def cancel_item(item, user):
+
+        item.status = ServiceRequestItem.Status.CANCELED
+        item.scheduled_for = None
+        item.operator = None
+        item.updated_by = user
+
+        item.save(
+            update_fields=[
+                "status",
+                "scheduled_for",
+                "operator",
+                "updated_by",
+            ]
+        )
+
+    @staticmethod
+    def schedule_item(
+        item,
+        operator,
+        date_value,
+        time_value,
+        user,
+    ):
+
+        previous_operator_id = item.operator_id
+
+        item.scheduled_for = DiaryService.get_scheduled_for(
+            date_value,
+            time_value,
+        )
+
+        item.operator = operator
+        item.status = ServiceRequestItem.Status.SCHEDULED
+        item.updated_by = user
+
+        item.save(
+            update_fields=[
+                "scheduled_for",
+                "operator",
+                "status",
+                "updated_by",
+            ]
+        )
+
+        # Só notifica se realmente houve uma nova atribuição.
+        if previous_operator_id != operator.pk:
+            DiaryService.notify_new_assignment(
+                item,
+                operator,
+            )
+
+    @staticmethod
+    def update_request_status(service_request):
+
+        items = ServiceRequestItem.objects.filter(
+            service_request=service_request
+        )
+
+        # Enquanto existir item pendente,
+        # não altera o status geral.
+        if items.filter(
+            status=ServiceRequestItem.Status.PENDING
+        ).exists():
+            return
+
+        if items.filter(
+            status=ServiceRequestItem.Status.SCHEDULED
+        ).exists():
+
+            new_status = ServiceRequest.Status.SCHEDULED
+
+        else:
+
+            new_status = ServiceRequest.Status.REQUESTED
+
+        if service_request.status != new_status:
+
+            service_request.status = new_status
+
+            service_request.save(
+                update_fields=["status"]
+            )
+
+    @staticmethod
     def to_schedule(request, service_request_id):
 
         redirect_name = DiaryService.redirect_name(request)
 
         try:
-            errors = DiaryService.verify_schedule(request)
 
-            if errors is None:
-                return redirect(redirect_name)
-
-            if errors:
-                for error in errors:
-                    messages.warning(request, error)
-
-                return redirect(redirect_name)
+            items = DiaryService.get_schedule_items(request)
 
             service_request = ServiceRequest.objects.filter(
                 public_id=service_request_id
             ).first()
 
             if not service_request:
-                messages.error(
-                    request,
+                raise ValueError(
                     "Solicitação de serviço não encontrada."
                 )
-                return redirect(redirect_name)
 
-            itens = json.loads(
-                request.POST.get("schedule_items", "[]")
-            )
+            with transaction.atomic():
 
-            for item_data in itens:
+                for item_data in items:
 
-                if len(item_data) != 5:
-                    continue
-
-                (
-                    item_id,
-                    date_value,
-                    time_value,
-                    status,
-                    operator_value,
-                ) = item_data
-
-                item = ServiceRequestItem.objects.filter(
-                    public_id=item_id,
-                    service_request=service_request,
-                ).first()
-
-                if not item:
-                    continue
-
-                # =========================
-                # ITEM CANCELADO
-                # =========================
-
-                if status == "canceled":
-
-                    item.status = ServiceRequestItem.Status.CANCELED
-
-                    item.scheduled_for = None
-
-                    # Remove o operador do item cancelado
-                    item.operator = None
-
-                    item.updated_by = request.user
-
-                    item.save(
-                        update_fields=[
-                            "status",
-                            "scheduled_for",
-                            "operator",
-                            "updated_by",
-                        ]
-                    )
-
-                    continue
-
-                # =========================
-                # ITEM AGENDADO
-                # =========================
-
-                if date_value and time_value:
-
-                    scheduled_date = datetime_date.fromisoformat(
-                        date_value
-                    )
-
-                    scheduled_time = datetime_time.fromisoformat(
-                        time_value
-                    )
-
-                    scheduled_for = datetime.combine(
-                        scheduled_date,
-                        scheduled_time,
-                    )
-
-                    scheduled_for = timezone.make_aware(
-                        scheduled_for,
-                        timezone.get_current_timezone(),
-                    )
-
-                    operator_user = DiaryService.get_operator(
-                        operator_value
-                    )
-
-                    if not operator_user:
+                    if len(item_data) != 5:
                         raise ValueError(
-                            f"Operador '{operator_value}' não encontrado."
+                            "Foi encontrado um item de "
+                            "agendamento inválido."
                         )
 
-                    item.scheduled_for = scheduled_for
-                    item.operator = operator_user
+                    (
+                        item_id,
+                        date_value,
+                        time_value,
+                        status,
+                        operator_value,
+                    ) = item_data
 
-                    item.status = (
-                        ServiceRequestItem.Status.SCHEDULED
+                    item = ServiceRequestItem.objects.filter(
+                        public_id=item_id,
+                        service_request=service_request,
+                    ).first()
+
+                    if not item:
+                        raise ValueError(
+                            "Um dos serviços informados "
+                            "não foi encontrado."
+                        )
+
+                    operator = DiaryService.validate_item(
+                        item=item,
+                        date_value=date_value,
+                        time_value=time_value,
+                        status=status,
+                        operator_value=operator_value,
                     )
 
-                    item.updated_by = request.user
+                    # CANCELADO
+                    if status == "canceled":
 
-                    item.save(
-                        update_fields=[
-                            "scheduled_for",
-                            "operator",
-                            "status",
-                            "updated_by",
-                        ]
-                    )
+                        DiaryService.cancel_item(
+                            item,
+                            request.user,
+                        )
 
-            # =========================
-            # ATUALIZA STATUS DA SOLICITAÇÃO
-            # =========================
+                        continue
 
-            itens_pendentes = ServiceRequestItem.objects.filter(
-                service_request=service_request,
-                status=ServiceRequestItem.Status.PENDING,
-            )
+                    # AGENDADO
+                    if date_value and time_value:
 
-            if not itens_pendentes.exists():
+                        DiaryService.schedule_item(
+                            item=item,
+                            operator=operator,
+                            date_value=date_value,
+                            time_value=time_value,
+                            user=request.user,
+                        )
 
-                itens_agendados = ServiceRequestItem.objects.filter(
-                    service_request=service_request,
-                    status=ServiceRequestItem.Status.SCHEDULED,
+                DiaryService.update_request_status(
+                    service_request
                 )
 
-                if itens_agendados.exists():
-
-                    service_request.status = (
-                        ServiceRequest.Status.SCHEDULED
-                    )
-
-                else:
-
-                    service_request.status = (
-                        ServiceRequest.Status.REQUESTED
-                    )
-
-                service_request.save(
-                    update_fields=[
-                        "status",
-                    ]
-                )
-
-            messages.success(
-                request,
-                f"Serviço {service_request.protocol} "
-                f"atualizado com sucesso!"
-            )
-
-            return redirect(redirect_name)
+            messages.success(request, f"Serviço {service_request.protocol} "
+                f"atualizado com sucesso!")
 
         except json.JSONDecodeError:
+            messages.error(request, "Os dados do agendamento são inválidos.")
+
+        except ValueError as error:
+
+            messages.warning(
+                request,
+                str(error)
+            )
+
+        except Exception as error:
 
             messages.error(
                 request,
-                "Erro ao interpretar os dados do agendamento."
+                f"Erro ao agendar serviços! Erro: {error}"
             )
 
-            return redirect(redirect_name)
+        return redirect(redirect_name)
 
-        except Exception as e:
 
-            messages.error(
-                request,
-                f"Erro ao agendar serviços! Erro: {e}"
-            )
-
-            return redirect(redirect_name)
+    

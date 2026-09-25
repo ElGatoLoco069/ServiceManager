@@ -99,9 +99,12 @@
 
         function applyFilter(status) {
             var visibleCount = 0;
+            var todayKey = getTodayKey();
 
             cards.forEach(function (card) {
-                var isVisible = status === "all" || card.dataset.taskStatus === status;
+                var isVisible = status === "all" ||
+                    (status === "today" && card.dataset.taskDate === todayKey) ||
+                    card.dataset.taskStatus === status;
                 card.hidden = !isVisible;
                 if (isVisible) visibleCount += 1;
             });
@@ -116,12 +119,17 @@
                 emptyState.hidden = visibleCount !== 0;
                 if (visibleCount === 0 && emptyTitle && emptyDescription) {
                     var hasAssignedTasks = cards.length > 0;
-                    emptyTitle.textContent = hasAssignedTasks
-                        ? "Nenhuma tarefa neste status"
-                        : "Nenhuma tarefa atribuída";
-                    emptyDescription.textContent = hasAssignedTasks
-                        ? "Selecione outro filtro para conferir suas demais tarefas."
-                        : "Não há serviços designados para você no momento.";
+                    if (status === "today" && hasAssignedTasks) {
+                        emptyTitle.textContent = "Nenhuma tarefa para hoje";
+                        emptyDescription.textContent = "Não há serviços agendados para hoje.";
+                    } else {
+                        emptyTitle.textContent = hasAssignedTasks
+                            ? "Nenhuma tarefa neste status"
+                            : "Nenhuma tarefa atribuída";
+                        emptyDescription.textContent = hasAssignedTasks
+                            ? "Selecione outro filtro para conferir suas demais tarefas."
+                            : "Não há serviços designados para você no momento.";
+                    }
                 }
             }
             if (summary) {

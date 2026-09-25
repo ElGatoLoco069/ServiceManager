@@ -26,7 +26,6 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 SERVER_ENVIRONMENT = os.getenv('SERVER_ENVIRONMENT')
 
-
 SESSION_COOKIE_AGE = 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -41,6 +40,12 @@ SESSION_COOKIE_SAMESITE = "Lax"
 
 ALLOWED_HOSTS = ["127.0.0.1", "192.168.1.185"]
 
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
+
+VAPID_CLAIMS = {
+    "sub": "mailto:ti@cafelandia.pr.gov.br"
+}
 
 # Application definition
 
@@ -59,6 +64,7 @@ INSTALLED_APPS = [
     'service_request',
     'settings',
     'field_operator',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -147,16 +153,26 @@ STATICFILES_DIRS = [
     BASE_DIR / "app" / "static",
 ]
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "service-manager",
+    }
+}
+
+
 JAZZMIN_SETTINGS = {
     # ... other settings
     
     "icons": {
         "auth": "fas fa-users-cog",
+        "accounts.Profile": "fas fa-user-tag",
         "auth.user": "fas fa-user",
         "auth.group": "fas fa-users",
         "registers.ServiceType": "fas fa-file-alt", 
+        "settings.DomainSetting": "fas fa-earth-americas",
+        "service_request.ServiceRequestItemPhoto": "fas fa-image",
         "service_request.ServiceRequest": "fas fa-clipboard-list",
         "service_request.ServiceRequestItem": "fas fa-list-ul",
-        "settings.DomainSetting": "fas fa-earth-americas",
     },
 }

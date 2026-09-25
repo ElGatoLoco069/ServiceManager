@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="{% static 'css/protocol_search.css' %}">
     <link rel="shortcut icon" href="{% static 'images/logo.svg' %}" type="image/x-icon">
     <script src="{% static 'notifications/toast.js' %}" defer></script>
+    <script src="{% static 'js/protocol_search.js' %}" defer></script>
 </head>
 
 <body class="protocol-page">
@@ -78,6 +79,7 @@
                             autocomplete="off"
                             autocapitalize="characters"
                             spellcheck="false"
+                            data-protocol-mask
                             required
                         >
                     </div>

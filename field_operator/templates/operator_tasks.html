@@ -10,11 +10,12 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/auto_refresh.js' %}" defer></script>
 <script src="{% static 'js/operator_tasks.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
-<div class="operator-tasks" data-operator-tasks>
+<div class="operator-tasks" data-operator-tasks data-auto-refresh-minutes="15">
     <header class="operator-tasks__header">
         <div class="operator-tasks__intro">
             <span class="operator-tasks__eyebrow">
@@ -61,10 +62,12 @@
             </div>
         </header>
 
-        <div class="task-filters" aria-label="Filtrar tarefas por situação">
+        <div class="task-filters" aria-label="Filtrar tarefas por período ou situação">
             <div class="task-filters__scroller">
                 <button class="task-filter is-active" type="button" data-task-filter="all"
                     aria-pressed="true">Todos</button>
+                <button class="task-filter" type="button" data-task-filter="today"
+                    aria-pressed="false">Hoje</button>
                 <button class="task-filter" type="button" data-task-filter="pending"
                     aria-pressed="false">Pendentes</button>
                 <button class="task-filter" type="button" data-task-filter="scheduled"
@@ -73,8 +76,6 @@
                     aria-pressed="false">Em andamento</button>
                 <button class="task-filter" type="button" data-task-filter="completed"
                     aria-pressed="false">Concluídos</button>
-                <button class="task-filter" type="button" data-task-filter="canceled"
-                    aria-pressed="false">Cancelados</button>
             </div>
         </div>
 
@@ -180,10 +181,6 @@
                                 <div>
                                     <dt>Telefone</dt>
                                     <dd>{{ item.service_request.requester_phone }}</dd>
-                                </div>
-                                <div>
-                                    <dt>Documento</dt>
-                                    <dd>{{ item.service_request.requester_document|default:"Não informado" }}</dd>
                                 </div>
                                 <div>
                                     <dt>E-mail</dt>

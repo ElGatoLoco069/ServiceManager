@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/auto_refresh.js' %}" defer></script>
 <script src="{% static 'js/home.js' %}" defer></script>
 {% endblock %}
 
@@ -18,7 +19,7 @@
 {% now "d/m/Y" as dashboard_today %}
 {% with awaiting_requests=context.awaiting_service_request %}
 {% with awaiting_count=context.awaiting_count %}
-<div class="dashboard" data-dashboard-today="{{ dashboard_today_iso }}">
+<div class="dashboard" data-auto-refresh-minutes="15" data-dashboard-today="{{ dashboard_today_iso }}">
     <header class="dashboard__header">
         <div class="dashboard__intro">
             <h1>Dashboard</h1>
