@@ -7,6 +7,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/diary.css' %}">
+<link rel="stylesheet" href="{% static 'css/request-details.css' %}">
 {% endblock %}
 
 {% block extra_js %}
@@ -175,6 +176,7 @@
                         data-protocol="{{ service_request.protocol }}"
                         data-requester="{{ service_request.requester_name }}"
                         data-phone="{{ service_request.requester_phone|default_if_none:'' }}"
+                        data-operator="{% if item.operator %}{{ item.operator.get_full_name|default:item.operator.username }}{% endif %}"
                         data-service="{{ item.service }}"
                         data-services="{{ item.service }}"
                         data-quantity="{{ item.amount|floatformat:'-2' }}"
@@ -374,37 +376,59 @@
         </form>
     </dialog>
 
-    <dialog class="agenda-dialog agenda-dialog--details" id="appointment-details-dialog" data-appointment-dialog
+    <dialog class="request-details-modal" id="appointment-details-dialog" data-appointment-dialog
         aria-labelledby="appointment-dialog-title" aria-describedby="appointment-dialog-description">
-        <header class="agenda-dialog__header">
-            <span class="agenda-dialog__icon" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span>
-            <div class="agenda-dialog__intro">
-                <h2 id="appointment-dialog-title" tabindex="-1">Detalhes do Agendamento</h2>
-                <p id="appointment-dialog-description">Informações disponíveis no evento selecionado.</p>
+        <header class="request-details-modal__header">
+            <span class="request-details-modal__icon" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span>
+            <div class="request-details-modal__intro">
+                <h2 id="appointment-dialog-title" tabindex="-1">Detalhes do agendamento</h2>
+                <p id="appointment-dialog-description">Confira as informações do serviço agendado e da solicitação.</p>
             </div>
-            <button class="agenda-dialog__close" type="button" data-appointment-close aria-label="Fechar detalhes do agendamento" title="Fechar">
+            <button class="request-details-modal__close" type="button" data-appointment-close aria-label="Fechar detalhes do agendamento" title="Fechar">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
         </header>
 
-        <div class="agenda-dialog__body">
-            <div class="appointment-status-row">
-                <span class="status-badge status-badge--scheduled" data-appointment-status>Agendado</span>
+        <div class="request-details-modal__body">
+            <div class="request-details">
+                <section class="request-details__section request-details__section--highlight" aria-label="Informações do agendamento">
+                    <div class="request-details__section-heading">
+                        <div>
+                            <span class="request-details__muted">Protocolo</span>
+                            <h3 data-appointment-detail="protocol">—</h3>
+                        </div>
+                        <span class="status-badge status-badge--scheduled" data-appointment-status>Agendado</span>
+                    </div>
+                    <p class="request-details__featured-service"><strong data-appointment-detail="services">—</strong></p>
+                    <dl class="request-details__grid">
+                        <div><dt><i class="fa-regular fa-calendar" aria-hidden="true"></i> Data</dt><dd data-appointment-detail="dateLabel">—</dd></div>
+                        <div><dt><i class="fa-regular fa-clock" aria-hidden="true"></i> Horário</dt><dd data-appointment-detail="time">—</dd></div>
+                        <div><dt><i class="fa-solid fa-user-tie" aria-hidden="true"></i> Operador responsável</dt><dd data-appointment-detail="operator">—</dd></div>
+                    </dl>
+                </section>
+
+                <section class="request-details__section" aria-label="Dados do solicitante">
+                    <h3>Solicitante</h3>
+                    <dl class="request-details__grid">
+                        <div><dt>Nome</dt><dd data-appointment-detail="requester">—</dd></div>
+                        <div><dt>Telefone</dt><dd data-appointment-detail="phone">—</dd></div>
+                    </dl>
+                </section>
+
+                <section class="request-details__section" aria-label="Local do serviço">
+                    <h3>Local do serviço</h3>
+                    <p class="request-details__address" data-appointment-detail="location">—</p>
+                </section>
+
+                <section class="request-details__section" aria-label="Observações">
+                    <h3>Observações</h3>
+                    <div class="request-details__notes"><p data-appointment-detail="notes">—</p></div>
+                </section>
             </div>
-            <dl class="appointment-details">
-                <div><dt>Protocolo</dt><dd data-appointment-detail="protocol">—</dd></div>
-                <div><dt>Solicitante</dt><dd data-appointment-detail="requester">—</dd></div>
-                <div><dt>Telefone</dt><dd data-appointment-detail="phone">—</dd></div>
-                <div><dt>Data</dt><dd data-appointment-detail="dateLabel">—</dd></div>
-                <div><dt>Horário</dt><dd data-appointment-detail="time">—</dd></div>
-                <div class="appointment-details__wide"><dt>Local do serviço</dt><dd data-appointment-detail="location">—</dd></div>
-                <div class="appointment-details__wide"><dt>Serviços</dt><dd data-appointment-detail="services">—</dd></div>
-                <div class="appointment-details__wide"><dt>Observações</dt><dd data-appointment-detail="notes">—</dd></div>
-            </dl>
         </div>
 
-        <footer class="agenda-dialog__footer">
-            <button class="agenda-button agenda-button--primary" type="button" data-appointment-close>Fechar</button>
+        <footer class="request-details-modal__footer">
+            <button class="request-details-modal__button" type="button" data-appointment-close>Fechar</button>
         </footer>
     </dialog>
 </div>

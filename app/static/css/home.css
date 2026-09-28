@@ -1244,6 +1244,29 @@ html:has(.schedule-modal[open]) { overflow: hidden; }
     font-size: 12px;
 }
 
+.request-action--button {
+    cursor: pointer;
+    white-space: nowrap;
+    font: inherit;
+    font-size: 12px;
+    transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.request-action--button:hover {
+    color: var(--color-info);
+    background: var(--color-info-soft);
+    transform: translateY(-1px);
+}
+
+.request-action--button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+}
+
+.request-details-trigger { display: flex; align-items: flex-start; }
+
+.schedule-item .request-details-trigger { margin-top: 3px; }
+
 .quick-actions {
     display: flex;
     align-items: center;
@@ -1365,6 +1388,7 @@ html:has(.schedule-modal[open]) { overflow: hidden; }
     .request-cell--date { white-space: normal; }
     .request-cell--services { grid-column: 1 / -1; }
     .request-cell--services ul { min-width: 0; }
+    .request-cell--actions { grid-column: 1 / -1; }
     .quick-actions__buttons { width: 100%; }
     .dashboard-button { flex: 1 1 160px; }
 }

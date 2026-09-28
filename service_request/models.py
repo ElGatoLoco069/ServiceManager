@@ -193,6 +193,10 @@ class ServiceRequestItem(models.Model):
         related_name="service_request_item_updated",
         verbose_name="Atualizado por",
     )
+
+    class Meta:
+
+        ordering=['-status']
     
 
 class ServiceRequestItemPhoto(models.Model):

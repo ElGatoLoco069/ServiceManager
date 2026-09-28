@@ -130,7 +130,7 @@ class DiaryService:
             f"{item.service}."
         )
 
-        url = f"/operator/service/{item.public_id}/"
+        url = f"/operator/list_task/"
 
         # Só envia depois que a transação for confirmada.
         transaction.on_commit(

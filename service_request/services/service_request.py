@@ -85,6 +85,12 @@ class ServiceRequestService:
             if not (context.get("requester_name") or "").strip():
                 errors.append("É necessario informar o nome do solicitante!")
 
+            if not (context.get("requester_document") or "").strip():
+                errors.append("É necessario informar o CPF ou CNPJ do solicitante!")
+
+            if not (context.get("requester_email") or "").strip():
+                errors.append("É necessario informar o E-mail do solicitante!")
+
             if not (context.get("requester_phone") or "").strip():
                 errors.append("É necessario informar o telefone do solicitante!")         
 
@@ -100,7 +106,8 @@ class ServiceRequestService:
             for qtd in context['quantities']:
                 if Decimal(qtd) < 0.01:
                     errors.append("A quantidade não pode ser menor que 0.01!")
-
+                if Decimal(qtd) > 999:
+                    errors.append("A quantidade não pode ser maior que 999!")
 
             return errors
 

@@ -63,6 +63,7 @@ def start_service(request, service_id):
         service.status=ServiceRequestItem.Status.IN_PROGRESS
         service.started_at = timezone.now()
         service.started_by=request.user
+        service.updated_by=request.user
         service.save()    
 
         service_request = service.service_request

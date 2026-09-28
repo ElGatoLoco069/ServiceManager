@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", function () {
     var pendingModalOpener = null;
     var suppressPendingFocusRestore = false;
 
+    var requestDetailsModal = document.querySelector("[data-request-details-modal]");
+    var requestDetailsTitle = requestDetailsModal && requestDetailsModal.querySelector("[data-request-details-title]");
+    var requestDetailsBody = requestDetailsModal && requestDetailsModal.querySelector("[data-request-details-body]");
+    var requestDetailsOpener = null;
+
     var scheduleDialog = document.querySelector("[data-dashboard-schedule-dialog]");
     var scheduleForm = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-form]");
     var scheduleTitle = scheduleDialog && scheduleDialog.querySelector("[data-dashboard-schedule-title]");
@@ -74,6 +79,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 pendingModalOpener.focus();
             }
             pendingModalOpener = null;
+        });
+    }
+
+    if (requestDetailsModal && requestDetailsTitle && requestDetailsBody) {
+        document.addEventListener("click", function (event) {
+            var button = event.target.closest("[data-request-details-open]");
+            if (!button) return;
+
+            var trigger = button.closest(".request-details-trigger");
+            var template = trigger && trigger.querySelector("[data-request-details-template]");
+            if (!template) return;
+
+            requestDetailsOpener = button;
+            requestDetailsTitle.textContent = "Detalhes da solicitação " + (button.dataset.requestProtocol || "");
+            requestDetailsBody.replaceChildren(template.content.cloneNode(true));
+            requestDetailsModal.showModal();
+            requestDetailsTitle.focus();
+        });
+
+        requestDetailsModal.querySelectorAll("[data-request-details-close]").forEach(function (button) {
+            button.addEventListener("click", function () { requestDetailsModal.close(); });
+        });
+
+        setupBackdropClose(requestDetailsModal);
+        requestDetailsModal.addEventListener("close", function () {
+            requestDetailsBody.replaceChildren();
+            if (requestDetailsOpener && document.contains(requestDetailsOpener)) {
+                requestDetailsOpener.focus();
+            }
+            requestDetailsOpener = null;
         });
     }
 

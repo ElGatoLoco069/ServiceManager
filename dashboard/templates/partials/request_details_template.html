@@ -1,0 +1,93 @@
+<template data-request-details-template>
+    <div class="request-details">
+        {% if selected_item %}
+        <section class="request-details__section request-details__section--highlight" aria-label="Serviço desta agenda">
+            <div class="request-details__section-heading">
+                <h3>Serviço desta agenda</h3>
+                <span class="badge {% if selected_item.status == 'completed' %}badge--success{% elif selected_item.status == 'in_progress' %}badge--orange{% elif selected_item.status == 'scheduled' %}badge--info{% elif selected_item.status == 'canceled' %}badge--danger{% else %}badge--warning{% endif %}">{{ selected_item.get_status_display }}</span>
+            </div>
+            <p class="request-details__featured-service">
+                <strong>{{ selected_item.service }}</strong>
+                <span>{{ selected_item.amount|floatformat:"-2" }}{% if selected_item.unit %} {{ selected_item.unit }}{% endif %}</span>
+            </p>
+            <p class="request-details__operator">
+                <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
+                <strong>Operador responsável:</strong>
+                {% if selected_item.operator %}{{ selected_item.operator.get_full_name|default:selected_item.operator.username }}{% else %}Não atribuído{% endif %}
+            </p>
+            {% if selected_item.scheduled_for %}
+            <p class="request-details__scheduled">
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                <time datetime="{{ selected_item.scheduled_for|date:'c' }}">{{ selected_item.scheduled_for|date:"d/m/Y" }} às {{ selected_item.scheduled_for|time:"H:i" }}</time>
+            </p>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <section class="request-details__section" aria-label="Dados do solicitante">
+            <h3>Solicitante</h3>
+            <dl class="request-details__grid">
+                <div><dt>Nome</dt><dd>{{ service_request.requester_name }}</dd></div>
+                <div><dt>Telefone</dt><dd>{{ service_request.requester_phone }}</dd></div>
+                <div><dt>E-mail</dt><dd>{% if service_request.requester_email %}{{ service_request.requester_email }}{% else %}Não informado{% endif %}</dd></div>
+                <div>
+                    <dt>CPF</dt>
+                    <dd>
+                        {% if service_request.requester_document %}
+                            {% with cpf_digits=service_request.requester_document|cut:"."|cut:"-"|cut:" " %}
+                                {% if cpf_digits|length == 11 %}{{ cpf_digits|slice:":3" }}-***-***-{{ cpf_digits|slice:"-2:" }}{% else %}***-***-**{% endif %}
+                            {% endwith %}
+                        {% else %}
+                            Não informado
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="request-details__section" aria-label="Endereço do serviço">
+            <h3>Endereço do serviço</h3>
+            <address class="request-details__address">
+                {{ service_request.service_address }}{% if service_request.service_number %}, {{ service_request.service_number }}{% endif %}<br>
+                {{ service_request.service_neighborhood }}{% if service_request.service_postal_code %} · CEP {{ service_request.service_postal_code }}{% endif %}
+                {% if service_request.service_landmark %}<br><span>Referência: {{ service_request.service_landmark }}</span>{% endif %}
+            </address>
+        </section>
+
+        <section class="request-details__section" aria-label="Serviços solicitados">
+            <div class="request-details__section-heading">
+                <h3>Serviços solicitados</h3>
+                <span class="request-details__muted">{{ service_request.items.all|length }} {% if service_request.items.all|length == 1 %}serviço{% else %}serviços{% endif %}</span>
+            </div>
+            <ul class="request-details__services">
+                {% for item in service_request.items.all %}
+                <li class="{% if selected_item and item.public_id == selected_item.public_id %}is-current{% endif %}">
+                    <div class="request-details__service-main">
+                        <strong>{{ item.service }}</strong>
+                        <span>{{ item.amount|floatformat:"-2" }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
+                        {% if item.operator %}<span>Operador: {{ item.operator.get_full_name|default:item.operator.username }}</span>{% endif %}
+                        {% if item.scheduled_for %}
+                        <time datetime="{{ item.scheduled_for|date:'c' }}">{{ item.scheduled_for|date:"d/m/Y" }} às {{ item.scheduled_for|time:"H:i" }}</time>
+                        {% endif %}
+                    </div>
+                    <span class="badge {% if item.status == 'completed' %}badge--success{% elif item.status == 'in_progress' %}badge--orange{% elif item.status == 'scheduled' %}badge--info{% elif item.status == 'canceled' %}badge--danger{% else %}badge--warning{% endif %}">{{ item.get_status_display }}</span>
+                </li>
+                {% empty %}
+                <li class="request-details__service-empty">Nenhum serviço informado.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="request-details__section" aria-label="Situação e observações">
+            <div class="request-details__section-heading">
+                <h3>Situação</h3>
+                <span class="badge {% if service_request.status == 'completed' %}badge--success{% elif service_request.status == 'in_progress' %}badge--orange{% elif service_request.status == 'scheduled' %}badge--info{% elif service_request.status == 'canceled' %}badge--danger{% else %}badge--warning{% endif %}">{{ service_request.get_status_display }}</span>
+            </div>
+            <p class="request-details__created">Recebida em <time datetime="{{ service_request.created_at|date:'c' }}">{{ service_request.created_at|date:"d/m/Y \à\s H:i" }}</time></p>
+            <div class="request-details__notes">
+                <h4>Observações</h4>
+                <p>{% if service_request.notes %}{{ service_request.notes }}{% else %}Nenhuma observação informada.{% endif %}</p>
+            </div>
+        </section>
+    </div>
+</template>

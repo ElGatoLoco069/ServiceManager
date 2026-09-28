@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/request-details.css' %}">
 {% endblock %}
 
 {% block extra_js %}
@@ -96,6 +97,15 @@
                         <div class="schedule-item__meta">
                             <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ item.service_request.service_address }}{% if item.service_request.service_number %}, {{ item.service_request.service_number }}{% endif %} — {{ item.service_request.service_neighborhood }}</span>
                         </div>
+                        <div class="request-details-trigger">
+                            <button class="request-action request-action--button" type="button"
+                                data-request-details-open data-request-protocol="{{ item.service_request.protocol }}"
+                                aria-haspopup="dialog" aria-controls="request-details-modal"
+                                aria-label="Ver detalhes da solicitação {{ item.service_request.protocol }}">
+                                Ver detalhes <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                            </button>
+                            {% include "partials/request_details_template.html" with service_request=item.service_request selected_item=item %}
+                        </div>
                     </div>
                     <span class="badge {% if item.status == 'completed' %}badge--success{% elif item.status == 'in_progress' %}badge--orange{% else %}badge--info{% endif %}">{{ item.get_status_display }}</span>
                 </li>
@@ -153,7 +163,7 @@
             <table class="requests-table">
                 <caption class="sr-only">{{ context.recent_requests_count }} {% if context.recent_requests_count == 1 %}solicitação recente{% else %}solicitações recentes{% endif %}.</caption>
                 <thead class="requests-table__header">
-                    <tr><th scope="col">Protocolo</th><th scope="col">Solicitante</th><th scope="col">Serviços</th><th scope="col">Data</th><th scope="col">Situação</th></tr>
+                    <tr><th scope="col">Protocolo</th><th scope="col">Solicitante</th><th scope="col">Serviços</th><th scope="col">Data</th><th scope="col">Situação</th><th scope="col">Ações</th></tr>
                 </thead>
                 <tbody>
                     {% for service_request in context.recent_requests %}
@@ -175,6 +185,17 @@
                         <td class="request-cell request-cell--date" data-label="Data"><time datetime="{{ service_request.created_at|date:'c' }}">{{ service_request.created_at|date:"d/m/Y H:i" }}</time></td>
                         <td class="request-cell" data-label="Situação">
                             <span class="badge {% if service_request.status == 'completed' %}badge--success{% elif service_request.status == 'in_progress' %}badge--orange{% elif service_request.status == 'scheduled' %}badge--info{% elif service_request.status == 'canceled' %}badge--danger{% else %}badge--warning{% endif %}">{{ service_request.get_status_display }}</span>
+                        </td>
+                        <td class="request-cell request-cell--actions" data-label="Ações">
+                            <div class="request-details-trigger">
+                                <button class="request-action request-action--button" type="button"
+                                    data-request-details-open data-request-protocol="{{ service_request.protocol }}"
+                                    aria-haspopup="dialog" aria-controls="request-details-modal"
+                                    aria-label="Ver detalhes da solicitação {{ service_request.protocol }}">
+                                    Ver detalhes <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                                </button>
+                                {% include "partials/request_details_template.html" with service_request=service_request %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -330,6 +351,25 @@
     </form>
 </dialog>
 {% endif %}
+
+<dialog class="request-details-modal" id="request-details-modal" data-request-details-modal
+    aria-labelledby="request-details-title" aria-describedby="request-details-description">
+    <header class="request-details-modal__header">
+        <span class="request-details-modal__icon" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
+        <div class="request-details-modal__intro">
+            <h2 id="request-details-title" tabindex="-1" data-request-details-title>Detalhes da solicitação</h2>
+            <p id="request-details-description">Confira os dados do solicitante, endereço e serviços desta solicitação.</p>
+        </div>
+        <button class="request-details-modal__close" type="button" data-request-details-close
+            aria-label="Fechar detalhes da solicitação" title="Fechar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </header>
+    <div class="request-details-modal__body" data-request-details-body></div>
+    <footer class="request-details-modal__footer">
+        <button class="request-details-modal__button" type="button" data-request-details-close>Fechar</button>
+    </footer>
+</dialog>
 {% endwith %}
 {% endwith %}
 

@@ -52,3 +52,4 @@ dist/
 **/migrations/*.pyc
 
 **/config/vapid/private_key.pem
+**/config/vapid/public_key.pem

@@ -31,7 +31,7 @@
                 <div class="service-request__field service-request__field--large">
                     <label for="requester-name">Nome completo <span aria-hidden="true">*</span></label>
                     <div class="service-request__input-icon"><i class="fa-regular fa-user" aria-hidden="true"></i>
-                        <input id="requester-name" name="requester_name" type="text" autocomplete="name" placeholder="Ex.: João da Silva" required></div>
+                        <input id="requester-name" name="requester_name" type="text" autocomplete="name" placeholder="Ex.: João da Silva" required maxlength="150"></div>
                 </div>
                 <div class="service-request__field service-request__field--small">
                     <label for="requester-phone">Telefone <span aria-hidden="true">*</span></label>
@@ -39,14 +39,14 @@
                         <input id="requester-phone" name="requester_phone" type="tel" autocomplete="tel" placeholder="(45) 99999-9999" data-mask-phone required></div>
                 </div>
                 <div class="service-request__field service-request__field--small">
-                    <label for="requester-document">CPF/CNPJ</label>
+                    <label for="requester-document">CPF/CNPJ <span aria-hidden="true">*</span></label>
                     <div class="service-request__input-icon"><i class="fa-regular fa-id-card" aria-hidden="true"></i>
-                        <input id="requester-document" name="requester_document" type="text" inputmode="numeric" placeholder="Ex.: 123.456.789-00" data-mask-document></div>
+                        <input id="requester-document" name="requester_document" type="text" inputmode="numeric" placeholder="Ex.: 123.456.789-00" data-mask-document required></div>
                 </div>
                 <div class="service-request__field service-request__field--large">
-                    <label for="requester-email">E-mail</label>
+                    <label for="requester-email">E-mail <span aria-hidden="true">*</span></label>
                     <div class="service-request__input-icon"><i class="fa-regular fa-envelope" aria-hidden="true"></i>
-                        <input id="requester-email" name="requester_email" type="email" autocomplete="email" placeholder="joao.silva@exemplo.com"></div>
+                        <input id="requester-email" name="requester_email" type="email" autocomplete="email" placeholder="joao.silva@exemplo.com" required></div>
                 </div>
             </div>
         </section>
@@ -74,9 +74,9 @@
                         <input id="service-number" name="service_number" type="text" placeholder="Ex.: 123 ou S/N"></div>
                 </div>
                 <div class="service-request__field service-request__field--neighborhood">
-                    <label for="service-neighborhood">Bairro / Comunidade</label>
+                    <label for="service-neighborhood">Bairro / Comunidade <span aria-hidden="true">*</span></label>
                     <div class="service-request__input-icon"><i class="fa-solid fa-map" aria-hidden="true"></i>
-                        <input id="service-neighborhood" name="service_neighborhood" type="text" placeholder="Ex.: Linha São José" data-service-neighborhood></div>
+                        <input id="service-neighborhood" name="service_neighborhood" type="text" placeholder="Ex.: Linha São José" data-service-neighborhood required></div>
                 </div>
                 <div class="service-request__field service-request__field--landmark">
                     <label for="service-landmark">Ponto de referência</label>
@@ -106,7 +106,7 @@
                     </div>
                     <div class="service-request__field service-request__field--quantity">
                         <label for="service-quantity-1">Quantidade <span aria-hidden="true">*</span></label>
-                        <input id="service-quantity-1" name="quantities" type="number" min="0.01" step="any" value="1" required>
+                        <input id="service-quantity-1" name="quantities" type="number" min="0.01" max="999" step="any" value="1" required>
                     </div>
                     <div class="service-request__field service-request__field--unit">
                         <label for="service-unit-1">Unidade <span aria-hidden="true">*</span></label>

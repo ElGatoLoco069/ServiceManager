@@ -106,7 +106,7 @@ class AuthenticationService:
         """
 
         return {
-            "username": request.POST.get("username", "").strip(),
+            "username": request.POST.get("username", "").strip().lower(),
             "password": request.POST.get("password", ""),
         }
 

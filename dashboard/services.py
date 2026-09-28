@@ -31,12 +31,23 @@ class DashboardService:
                     ServiceRequestItem.Status.COMPLETED,
                 ),
             )
-            .select_related("service_request")
+            .select_related("service_request", "operator")
+            .prefetch_related(
+                Prefetch(
+                    "service_request__items",
+                    queryset=ServiceRequestItem.objects.select_related("operator").order_by("created_at"),
+                ),
+            )
             .order_by("scheduled_for", "created_at")
         )
 
         recent_requests = list(
-            ServiceRequest.objects.prefetch_related("items").order_by("-created_at")[:5]
+            ServiceRequest.objects.prefetch_related(
+                Prefetch(
+                    "items",
+                    queryset=ServiceRequestItem.objects.select_related("operator").order_by("created_at"),
+                ),
+            ).order_by("-created_at")[:5]
         )
 
         context = {
@@ -61,6 +72,3 @@ class DashboardService:
         }
 
         return context
-
-
-
