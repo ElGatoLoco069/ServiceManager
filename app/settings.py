@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'settings',
     'field_operator',
     'notifications',
+    'fees',
 ]
 
 MIDDLEWARE = [
@@ -176,3 +177,4 @@ JAZZMIN_SETTINGS = {
         "service_request.ServiceRequestItem": "fas fa-list-ul",
     },
 }
+

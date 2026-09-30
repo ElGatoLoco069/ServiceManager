@@ -19,7 +19,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from accounts.views import AuthenticationView, logout_view, UserProfileView
+from accounts.views import AuthenticationView, logout_view, UserProfileView, UserUpdateProfileView
 from dashboard.views import HomeView
 
 from registers.views import ListServiceTypeView, CreateServiceTypeView, UpdateServiceTypeView
@@ -35,6 +35,8 @@ urlpatterns = [
     path('accounts/auth/', AuthenticationView.as_view(), name='auth'),
     path('accounts/logout/', logout_view.as_view(), name='logout'),
     path("accounts/user_profile/", UserProfileView.as_view(), name="user_profile"),
+    path("accounts/update_profile/", UserUpdateProfileView.as_view(), name="update_profile"),
+
 
     path("dashboard/home/", HomeView.as_view(), name="home"),
 

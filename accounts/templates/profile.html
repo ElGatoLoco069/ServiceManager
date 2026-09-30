@@ -75,79 +75,95 @@
                     </div>
                 </header>
 
-                <div class="profile-fields-grid">
-                    <div class="profile-field">
-                        <label for="profile-full-name">Nome completo</label>
-                        <div class="profile-field__control">
-                            <i class="fa-solid fa-user profile-field__icon" aria-hidden="true"></i>
-                            <input id="profile-full-name" type="text" value="{{ context.user.get_full_name }}" readonly>
+                <form
+                    class="profile-update-form"
+                    method="post"
+                    action="{% url 'update_profile' %}"
+                >
+                    {% csrf_token %}
+                    <div class="profile-fields-grid">
+                        <div class="profile-field">
+                            <label for="profile-full-name">Nome completo</label>
+                            <div class="profile-field__control">
+                                <i class="fa-solid fa-user profile-field__icon" aria-hidden="true"></i>
+                                <input id="profile-full-name" type="text" value="{{ context.user.get_full_name }}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="profile-username">Usuário</label>
+                            <div class="profile-field__control">
+                                <i class="fa-solid fa-at profile-field__icon" aria-hidden="true"></i>
+                                <input id="profile-username" type="text" value="{{ context.user.username }}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="profile-field" data-profile-editable>
+                            <label for="profile-email">E-mail</label>
+                            <div class="profile-field__control">
+                                <i class="fa-solid fa-envelope profile-field__icon" aria-hidden="true"></i>
+                                <input
+                                    id="profile-email"
+                                    type="email"
+                                    name="email"
+                                    value="{{ context.user.email }}"
+                                    autocomplete="email"
+                                    readonly
+                                    data-profile-editable-input
+                                >
+                                <button
+                                    class="profile-field__edit"
+                                    type="button"
+                                    aria-label="Editar e-mail"
+                                    title="Editar e-mail"
+                                    data-profile-edit-button
+                                    data-edit-label="Editar e-mail"
+                                    data-confirm-label="Concluir edição do e-mail"
+                                >
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="profile-field" data-profile-editable>
+                            <label for="profile-department">Setor</label>
+                            <div class="profile-field__control">
+                                <i class="fa-solid fa-building profile-field__icon" aria-hidden="true"></i>
+                                <input
+                                    id="profile-department"
+                                    type="text"
+                                    name="department"
+                                    value="{{ context.profile.department }}"
+                                    readonly
+                                    data-profile-editable-input
+                                >
+                                <button
+                                    class="profile-field__edit"
+                                    type="button"
+                                    aria-label="Editar setor"
+                                    title="Editar setor"
+                                    data-profile-edit-button
+                                    data-edit-label="Editar setor"
+                                    data-confirm-label="Concluir edição do setor"
+                                >
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="profile-field">
-                        <label for="profile-username">Usuário</label>
-                        <div class="profile-field__control">
-                            <i class="fa-solid fa-at profile-field__icon" aria-hidden="true"></i>
-                            <input id="profile-username" type="text" value="{{ context.user.username }}" readonly>
-                        </div>
+                    <div class="profile-information-note">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        <p>Nome e usuário são informações vinculadas à conta. E-mail e setor podem ser atualizados quando necessário.</p>
                     </div>
 
-                    <div class="profile-field" data-profile-editable>
-                        <label for="profile-email">E-mail</label>
-                        <div class="profile-field__control">
-                            <i class="fa-solid fa-envelope profile-field__icon" aria-hidden="true"></i>
-                            <input
-                                id="profile-email"
-                                type="email"
-                                value="{{ context.user.email }}"
-                                autocomplete="email"
-                                readonly
-                                data-profile-editable-input
-                            >
-                            <button
-                                class="profile-field__edit"
-                                type="button"
-                                aria-label="Editar e-mail"
-                                title="Editar e-mail"
-                                data-profile-edit-button
-                                data-edit-label="Editar e-mail"
-                                data-confirm-label="Concluir edição do e-mail"
-                            >
-                                <i class="fa-solid fa-pen" aria-hidden="true"></i>
-                            </button>
-                        </div>
+                    <div class="profile-form-actions">
+                        <button class="profile-form-submit" type="submit">
+                            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                            Salvar alterações
+                        </button>
                     </div>
-
-                    <div class="profile-field" data-profile-editable>
-                        <label for="profile-department">Setor</label>
-                        <div class="profile-field__control">
-                            <i class="fa-solid fa-building profile-field__icon" aria-hidden="true"></i>
-                            <input
-                                id="profile-department"
-                                type="text"
-                                value="{{ context.profile.department }}"
-                                readonly
-                                data-profile-editable-input
-                            >
-                            <button
-                                class="profile-field__edit"
-                                type="button"
-                                aria-label="Editar setor"
-                                title="Editar setor"
-                                data-profile-edit-button
-                                data-edit-label="Editar setor"
-                                data-confirm-label="Concluir edição do setor"
-                            >
-                                <i class="fa-solid fa-pen" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-information-note">
-                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                    <p>Nome e usuário são informações vinculadas à conta. E-mail e setor podem ser atualizados quando necessário.</p>
-                </div>
+                </form>
             </section>
 
             <section class="profile-card" aria-labelledby="preferences-title">

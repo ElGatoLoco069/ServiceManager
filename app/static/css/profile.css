@@ -318,6 +318,40 @@
     line-height: 1.55;
 }
 
+.profile-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.profile-form-submit {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 0 17px;
+    border: 1px solid var(--color-primary);
+    border-radius: 10px;
+    color: var(--ui-white);
+    background: var(--color-primary);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.profile-form-submit:hover {
+    border-color: var(--color-primary-hover);
+    background: var(--color-primary-hover);
+}
+
+.profile-form-submit:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
 .profile-setting {
     display: flex;
     align-items: center;
@@ -472,6 +506,11 @@
         flex-direction: column;
     }
 
+    .profile-form-actions,
+    .profile-form-submit {
+        width: 100%;
+    }
+
     .profile-theme-options {
         width: 100%;
     }
@@ -490,6 +529,7 @@
 @media (prefers-reduced-motion: reduce) {
     .profile-field input,
     .profile-field__edit,
+    .profile-form-submit,
     .profile-theme-options button {
         transition: none;
     }

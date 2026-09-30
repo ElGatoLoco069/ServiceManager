@@ -110,6 +110,14 @@
                                         </a>
                                     </li>
 
+                                    <li>
+                                        <a class="sidebar__item" href="#"
+                                            {% if current_url == 'list_fees' or current_url == 'new_service' or current_url == 'detail_service' %}aria-current="page"{% endif %}>
+                                            <span class="sidebar__submenu-dot" aria-hidden="true"></span>
+                                            <span class="sidebar__label">Taxas</span>
+                                        </a>
+                                    </li>
+
                                 </ul>
                             </li>
                             {% endwith %}

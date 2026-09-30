@@ -35,3 +35,47 @@ def get_profile_user(request):
         messages.error(request, "Erro ao carregar perfil do usuario!")
 
 
+
+@staticmethod
+def update_profile(request):
+
+    user = request.user
+    user = User.objects.filter(username=user).first()
+    
+    email = request.POST.get("email")
+    department = request.POST.get("department")
+
+
+    if not user:
+        messages.warning(request, "Usuario não encontrado!")
+        return redirect("auth")
+
+    if email:
+        user.email=email
+        user.save()
+
+    profile = Profile.objects.filter(user=user).first()
+
+    if not profile:
+        messages.warning(request, "Não foi possivel localizar o perfil do usuario!")
+        return redirect("auth")
+
+    if department:
+        profile.department=department
+        profile.save()
+
+    if department or email:
+        messages.success(request, "Informações do usuario atualizadas com sucesso!")
+        return redirect("user_profile")
+
+
+    return redirect("user_profile")
+
+
+
+
+
+
+
+
+

@@ -126,7 +126,7 @@ class DiaryService:
         title = "Nova tarefa atribuída"
 
         message = (
-            f"Você recebeu uma nova tarefa: "
+            f"Olá {operator.first_name}, uma nova tarefa foi atribuida à você! "
             f"{item.service}."
         )
 
@@ -140,7 +140,8 @@ class DiaryService:
                 message=message,
                 url=url,
                 tag=f"service-{item.public_id}",
-            )
+            ),
+            print(f"Notificação enviada com sucesso! {operator}")
         )
 
     @staticmethod
